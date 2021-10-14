@@ -1,0 +1,11 @@
+{
+  "expo": {
+    "name": "flib-rn-app",
+    "slug": "flib-rn-app",
+    "version": "1.0.0",
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  },
+  "name": "flib-rn-app"
+}
