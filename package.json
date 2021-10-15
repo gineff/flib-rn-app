@@ -19,7 +19,8 @@
     "react-native-screens": "~3.4.0",
     "react-native-unimodules": "0.14.10",
     "react-native-web": "~0.13.12",
-    "realm-web": "^1.3.0"
+    "realm-web": "^1.3.0",
+    "string.prototype.matchall": "^4.0.6"
   },
   "devDependencies": {
     "@babel/core": "^7.9.0"
