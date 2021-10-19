@@ -125,7 +125,8 @@ export default ({navigation, route})=> {
     //clientData.length/limit < page === page защита от дублирования
     
     console.log(loadmore, clientData.length, clientData.length/limit );
-    if(loadmore && (clientData.length === 0 || (clientData.length/limit < page))) {
+    //временно page<3, пока тестируем в барузере. там поему что считает что достигается дно без прокрутки
+    if(page<3 && loadmore && (clientData.length === 0 || (clientData.length/limit < page))) {
       setPending_process(true);
       setRefresh(true);
       requestToServer(page);
