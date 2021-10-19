@@ -27,6 +27,7 @@ const generateUrl = ({page, params}) => {
   }else if(queryType === "week"){
     url =  "/opds/new/" + (page - 1) + "/new/" ;
   }
+  return url;
 };
 
 export default ({navigation, route})=> {
