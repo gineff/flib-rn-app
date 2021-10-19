@@ -10,16 +10,16 @@ const Cover = ({item})=> {
   return <View style={{height:157, width: 100, backgroundColor: "lightgrey", marginRight: 10, justifyContent: "center", alignContent: "center"}}>
     {item.image?
       (<Image  style={styles.cover} source={{uri: createImageUrl(item.image) }} />) :
-      (<Text>{item.title}</Text>)
+      (<Text style={{textAlign: 'center'}}>{item.title}</Text>)
     }
   </View>
 };
 
 
-const Author = ({author, navigation})=> {
+const Author = ({author, navigation, style})=> {
   return (<View>
       {author.map((el,i)=>
-          (<Text onPress = {()=> {navigation.navigate("Author",{query:el.id});}} key={i}>{el.name} </Text>))}
+          (<Text {...{style}} onPress = {()=> {navigation.push("Author",{query:el.id});}} key={i}>{el.name} </Text>))}
   </View>)
 };
 
@@ -27,20 +27,24 @@ export default ({book, navigation})=> {
   const {item, index} = book;
 
   return (
-    <View style={styles.listItem} >
-      <Cover item={item}/>
-      <View style={{flexDirection: "column", paddingHorizontal: 0,  flex: 1, width: "100%"}}>
-        <Text>{index}</Text>
-        {/*title*/}
-        <Text style={{fontWeight: "bold"}}>{item.title}</Text>
-        {/*sequence*/}
-        {!!item.sequencesTitle.length && (<Text>Серия: {item.sequencesTitle.join("; ")}</Text>)}
-        {/*author*/}
-        <Author author = {item.author} navigation = {navigation}/>
-        {item.content && (<Text style={{fontWeight: "bold"}}>{item.content.replace(/(<p class=\"book\") | (<\/p>) | <\/br>/g,"")}</Text>)}
+      <View style={styles.listItem} >
+        <View  >
+          <Cover  item={item}/>
+          <Text style={{textAlign: 'center', fontWeight: "bold"}}>{item?.year}</Text>
+        </View>
+        <View style={{flexDirection: "column", paddingHorizontal: 0,  flex: 1, width: "100%", maxHeight: 170}}>
+          {/*title*/}
+          <Text onPress = {()=> {navigation.navigate("Book",{book})}} style={{fontWeight: "bold", paddingBottom: 5}}>{index+". "+item.title}</Text>
+          {/*sequence*/}
+          {!!item.sequencesTitle.length && (<Text style={{color:'#f4511e', marginBottom: 5}}>Серия: {item.sequencesTitle.join("; ")}</Text>)}
+          {/*author*/}
+          <Author style={{color:'#f4511e'}} author = {item.author} navigation = {navigation}/>
+          {item.content && (<Text style={{paddingTop: 5}}>
+            {item.content.replace(/(<p class=\"book"\>)|(<\/p>)|(<br>)|(<i>)|(<\/i>)/g,"").replace(/<br\/>/,"\n").replace(/<br\/>/g," ")}
+          </Text>)}
 
+        </View>
       </View>
-    </View>
   )
 }
 

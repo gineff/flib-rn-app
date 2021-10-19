@@ -126,7 +126,7 @@ export default ({navigation, route})=> {
     
     console.log(loadmore, clientData.length, clientData.length/limit );
     //временно page<3, пока тестируем в барузере. там поему что считает что достигается дно без прокрутки
-    if(page<3 && loadmore && (clientData.length === 0 || (clientData.length/limit < page))) {
+    if(page<2 && loadmore && (clientData.length === 0 || (clientData.length/limit < page))) {
       setPending_process(true);
       setRefresh(true);
       requestToServer(page);

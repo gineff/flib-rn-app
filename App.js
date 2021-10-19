@@ -6,6 +6,7 @@ import {createDrawerNavigator} from '@react-navigation/drawer';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import CustomSidebarMenu from "./CustomSidebarMenu";
 import NewBooks  from "./Components/NewBooks";
+import Book  from "./Components/Book";
 
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
@@ -78,6 +79,10 @@ export default function App() {
             name="Author"
             component={NewBooks}
             initialParams={{queryType: "author", parseType: "xml"}}
+        />
+        <Stack.Screen
+            name="Book"
+            component={Book}
         />
         {/*   {newBooksData.map((el=> (<Stack.Screen key={el.name} name={el.name} initialParams={{queryType: el.name}} component={NewBooks}/>)))} */}
       </Stack.Navigator>
