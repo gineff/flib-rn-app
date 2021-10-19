@@ -27,18 +27,15 @@ const generateUrl = ({page, params}) => {
 
 export default ({navigation, route})=> {
 
-  const firstStartRef = useRef(true);
   const flatListRef = useRef(null);
   const [limit] = useState(20);
   const [page, setPage] = useState(1);
   const [clientData, setClientData] = useState([]);
-  const [serverData, serverDataLoaded] = useState([]);
   const [pending_process, setPending_process] = useState(true);
-  const [loadmore, setLoadmore] = useState(false);
+  const [loadmore, setLoadmore] = useState(true);
   const [refresh, setRefresh] = useState(false);
   const {parseType} = route.params;
   const [appName,sap] = useState(("name-")+route.name);
-
 
   const requestToServer = async page => {
     const url = generateUrl({...route, page});
@@ -48,10 +45,8 @@ export default ({navigation, route})=> {
     const data = parseType === "xml"? await xmlParserFlibusta(text) : await htmlParser(text);
     //страница html  загружается один раз
     if(parseType === "html") setLoadmore(false)
-    serverDataLoaded(data);
+    handleServerData(data);
   };
-
-
 
   const getText = async (url)=> {
     return fetch(proxyCorsUrl+encodeURIComponent('http://flibusta.is'+url))
@@ -86,49 +81,33 @@ export default ({navigation, route})=> {
     console.log("---------screen start", route.name);
   },[]);
 
-  useEffect(()=>{
+  const handleServerData = (data)=> {
 
-    if(!firstStartRef.current) {
       console.log("server data updated", appName);
-      if (serverData.length > 0 ) {
+      if (data.length > 0 ) {
         setRefresh(false);
-        setClientData([...clientData, ...serverData]);
-        setLoadmore(serverData.length === limit ? true : false);
+        setClientData([...clientData, ...data]);
+        setLoadmore(data.length === limit);
         setPending_process(false);
       } else {
         setLoadmore(false)
       }
-    }
-  },[serverData]);
-
-  const handleRequestToServer = ()=> {
-    setPending_process(true);
-    setRefresh(true);
-    requestToServer(page);
   };
 
   useEffect(()=>{
-    //при парсинге html не используются страницы
-
 
     console.log('page changed', page);
-    // при обновлении сервера экспо состояния (clientData, serverData, page) сохраняются,
+    // при обновлении сервера экспо состояния (clientData, page) сохраняются,
     // при этом происходит срабатывание события useEffect по этим состояниям.
     // из-за чего дублируется clientData
-
-
-    if(firstStartRef.current){
-      firstStartRef.current = false;
-      handleRequestToServer()
-    }else{
-      //html загружаем только один раз
-      //clientData/page === limit защита от дублирование при рестарте дев сервера экспо
-      if( parseType === "xml" && (clientData/page === limit) && serverData.length === limit){
-        handleRequestToServer()
-      }
+    //clientData.length/limit < page === page защита от дублирования
+    
+    console.log(loadmore, clientData.length, clientData.length/limit );
+    if(loadmore && (clientData.length === 0 || (clientData.length/limit < page))) {
+      setPending_process(true);
+      setRefresh(true);
+      requestToServer(page);
     }
-
-
   }, [page]);
 
   const handleLoadMore = () => {
