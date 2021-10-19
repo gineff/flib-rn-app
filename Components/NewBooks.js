@@ -1,9 +1,11 @@
 import React, {useEffect, useState, useRef} from 'react';
-import {StyleSheet, Text, View, Image, Button, TouchableOpacity, FlatList, AsyncStorage} from 'react-native';
+import {StyleSheet, Text, View, Image, Button, TouchableOpacity, FlatList} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import xmlParserFlibusta from "../service/xmlParserFlibusta";
 import BookItem from "./BookItem";
 import matchAll from "string.prototype.matchall";
 const proxyCorsUrl ="https://api.allorigins.win/raw?url=";
+const searchUrl = '/opds/opensearch?searchType=books&searchTerm=';
 
 const generateUrl = ({page, params}) => {
   const {queryType, query} = params;
@@ -63,18 +65,44 @@ export default ({navigation, route})=> {
     }))
   };
 
-  const unfold = async ()=> {
-    return new Promise(resolve => setTimeout(resolve, 1000))
+  const searchBook = async (book)=> {
+    console.log("search in opds", book.title);
+    const str = book.title.replace(/\[.*?\]/g,"");
+    const text = await getText(searchUrl+encodeURIComponent(str));
+    const data = xmlParserFlibusta(text);
+    return data.filter(el => el.bid === book.bid)[0];
   };
 
-  const unfoldData = async () => {
+  const unfold = async (data)=> {
 
+    let unfoldedData = {};
 
-
-
-    for(let index = 0; index < 5; index++) {
-      console.log(index,appName, new Date(), await unfold())
+    for(let book of data) {
+      let value = await AsyncStorage.getItem('BOOK-'+book.bid);
+      if (value === null) {
+        value = await searchBook(book);
+        if(value) AsyncStorage.setItem('BOOK-'+book.bid, JSON.stringify(value));
+      }
+      unfoldedData[book.bid] = JSON.parse(value);
     }
+    return  unfoldedData;
+
+  };
+
+  const unfoldData =  async (data) => {
+    //разбиваем данные на 5 частей
+    //unfold(data.slice(0,3)).then((res)=> console.log(res))
+    const result = [];
+    for(let i = 0; i < 5; i++) {
+      //await unfold(data.slice(i*limit,(i+1)*limit))
+      const res = await unfold(data.slice(i*limit,(i*limit)+3));
+      console.log(clientData.length);
+      clientData.map((el=> {console.log(res[el.bid])}))  ;
+      //const newClientData = clientData.map((el=> res[el.bid] || el))  ;
+      //console.log(newClientData)
+      //setClientData(newClientData);
+    }
+    console.log(result);
   };
 
   useEffect(()=>{
@@ -87,6 +115,7 @@ export default ({navigation, route})=> {
       if (data.length > 0 ) {
         setRefresh(false);
         setClientData([...clientData, ...data]);
+        if(parseType === "html") (()=> unfoldData(data))();
         setLoadmore(data.length === limit);
         setPending_process(false);
       } else {
