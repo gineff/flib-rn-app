@@ -40,6 +40,16 @@ const Sidebar = (props)=> {
             component={NewBooks}
         />
         <Drawer.Screen
+            name="Популярные книги за неделю"
+            initialParams={{queryType: "popularWeek", parseType: "html"}}
+            options={{
+              groupName: 'Популярные книги',
+              drawerLabel: 'Популярные книги за день',
+              activeTintColor: '#f4511e',
+            }}
+            component={NewBooks}
+        />
+        <Drawer.Screen
             name="Новинки за неделю"
             initialParams={{queryType: "week", parseType: "xml"}}
             options={{
