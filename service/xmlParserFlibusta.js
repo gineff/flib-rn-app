@@ -18,6 +18,8 @@ const xmlToJson = function(xml) {
         let el = item.childNodes.item(ii);
         if(el.nodeName === 'title') {
           book.title = el.textContent;
+        }else if(el.nodeName === "dc:issued"){
+          book.year = el.textContent;
         }else if(el.nodeName === 'content') {
           book.content = el.textContent;
           let res =  Array.from( matchAll(book.content, /Серия: (.*?)<br\/>/g));
