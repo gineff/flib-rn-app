@@ -37,6 +37,7 @@ export default ({book, navigation})=> {
         {!!item.sequencesTitle.length && (<Text>Серия: {item.sequencesTitle.join("; ")}</Text>)}
         {/*author*/}
         <Author author = {item.author} navigation = {navigation}/>
+        {item.content && (<Text style={{fontWeight: "bold"}}>{item.content.replace(/(<p class=\"book\") | (<\/p>) | <\/br>/g,"")}</Text>)}
 
       </View>
     </View>

@@ -21,44 +21,45 @@ const newBooksData = [
 
 const Sidebar = (props)=> {
     return     <Drawer.Navigator
-        screenOptions={{
-            headerStyle: {
-                backgroundColor: '#f4511e',
-            },
-            headerTintColor: '#fff',
-            headerTitleAlign: 'center'
-        }}
-        drawerContent={(props) => <CustomSidebarMenu {...props} />}>
-        <Drawer.Screen
-            name="Популярные книги за день"
-            initialParams={{queryType: "popularDay", parseType: "html"}}
-            options={{
-              groupName: 'Популярные книги',
-              drawerLabel: 'Популярные книги за день',
-              activeTintColor: '#f4511e',
-            }}
-            component={NewBooks}
-        />
-        <Drawer.Screen
-            name="Популярные книги за неделю"
-            initialParams={{queryType: "popularWeek", parseType: "html"}}
-            options={{
-              groupName: 'Популярные книги',
-              drawerLabel: 'Популярные книги за неделю',
-              activeTintColor: '#f4511e',
-            }}
-            component={NewBooks}
-        />
-        <Drawer.Screen
-            name="Новинки за неделю"
-            initialParams={{queryType: "week", parseType: "xml"}}
-            options={{
-                groupName: 'Новики',
-                drawerLabel: 'Новинки за неделю',
-                activeTintColor: '#f4511e',
-            }}
-            component={NewBooks}
-        />
+      screenOptions={{
+          headerStyle: {
+              backgroundColor: '#f4511e',
+          },
+          headerTintColor: '#fff',
+          headerTitleAlign: 'center'
+      }}
+      drawerContent={(props) => <CustomSidebarMenu {...props} />}>
+      <Drawer.Screen
+          name="Новинки за неделю"
+          initialParams={{queryType: "week", parseType: "xml"}}
+          options={{
+            groupName: 'Новики',
+            drawerLabel: 'Новинки за неделю',
+            activeTintColor: '#f4511e',
+          }}
+          component={NewBooks}
+      />
+      <Drawer.Screen
+          name="Популярные книги за день"
+          initialParams={{queryType: "popularDay", parseType: "html"}}
+          options={{
+            groupName: 'Популярные книги',
+            drawerLabel: 'Популярные книги за день',
+            activeTintColor: '#f4511e',
+          }}
+          component={NewBooks}
+      />
+      <Drawer.Screen
+          name="Популярные книги за неделю"
+          initialParams={{queryType: "popularWeek", parseType: "html"}}
+          options={{
+            groupName: 'Популярные книги',
+            drawerLabel: 'Популярные книги за неделю',
+            activeTintColor: '#f4511e',
+          }}
+          component={NewBooks}
+      />
+
 
     </Drawer.Navigator>
 };
