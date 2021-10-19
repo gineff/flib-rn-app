@@ -88,32 +88,47 @@ export default ({navigation, route})=> {
 
   useEffect(()=>{
 
-    if (firstStartRef.current) {
-      firstStartRef.current = false;
-    }else{
+    if(!firstStartRef.current) {
       console.log("server data updated", appName);
-      if(serverData.length > 0){
+      if (serverData.length > 0 ) {
         setRefresh(false);
         setClientData([...clientData, ...serverData]);
-        setLoadmore(serverData.length === limit? true : false );
+        setLoadmore(serverData.length === limit ? true : false);
         setPending_process(false);
-      }else{
+      } else {
         setLoadmore(false)
       }
     }
-
   },[serverData]);
 
-
-
+  const handleRequestToServer = ()=> {
+    setPending_process(true);
+    setRefresh(true);
+    requestToServer(page);
+  };
 
   useEffect(()=>{
-    console.log('page changed', page)
-    if(serverData.length === limit || page <= 2){
-      setPending_process(true);
-      setRefresh(true);
-      requestToServer(page);
+    //при парсинге html не используются страницы
+
+
+    console.log('page changed', page);
+    // при обновлении сервера экспо состояния (clientData, serverData, page) сохраняются,
+    // при этом происходит срабатывание события useEffect по этим состояниям.
+    // из-за чего дублируется clientData
+
+
+    if(firstStartRef.current){
+      firstStartRef.current = false;
+      handleRequestToServer()
+    }else{
+      //html загружаем только один раз
+      //clientData/page === limit защита от дублирование при рестарте дев сервера экспо
+      if( parseType === "xml" && (clientData/page === limit) && serverData.length === limit){
+        handleRequestToServer()
+      }
     }
+
+
   }, [page]);
 
   const handleLoadMore = () => {
