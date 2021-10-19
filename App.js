@@ -65,7 +65,7 @@ export default function App() {
         <Stack.Screen
             name="Author"
             component={NewBooks}
-            initialParams={{queryType: "author"}}
+            initialParams={{queryType: "author", parseType: "xml"}}
         />
         {/*   {newBooksData.map((el=> (<Stack.Screen key={el.name} name={el.name} initialParams={{queryType: el.name}} component={NewBooks}/>)))} */}
       </Stack.Navigator>
