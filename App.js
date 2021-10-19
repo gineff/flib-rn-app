@@ -44,7 +44,7 @@ const Sidebar = (props)=> {
             initialParams={{queryType: "popularWeek", parseType: "html"}}
             options={{
               groupName: 'Популярные книги',
-              drawerLabel: 'Популярные книги за день',
+              drawerLabel: 'Популярные книги за неделю',
               activeTintColor: '#f4511e',
             }}
             component={NewBooks}
