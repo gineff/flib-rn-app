@@ -27,6 +27,7 @@ const generateUrl = ({page, params}) => {
 
 export default ({navigation, route})=> {
 
+  const firstStartRef = useRef(true);
   const flatListRef = useRef(null);
   const [limit] = useState(20);
   const [page, setPage] = useState(1);
@@ -36,6 +37,8 @@ export default ({navigation, route})=> {
   const [loadmore, setLoadmore] = useState(false);
   const [refresh, setRefresh] = useState(false);
   const {parseType} = route.params;
+  const [appName,sap] = useState(("name-")+route.name);
+
 
   const requestToServer = async page => {
     const url = generateUrl({...route, page});
@@ -71,36 +74,37 @@ export default ({navigation, route})=> {
 
   const unfoldData = async () => {
 
-    console.log((~~(clientData.length/20)+1));
 
-    for(let index = 0; index < (~~(clientData/20)+1); index++) {
-      console.log(index, new Date(), await unfold())
+
+
+    for(let index = 0; index < 5; index++) {
+      console.log(index,appName, new Date(), await unfold())
     }
   };
 
   useEffect(()=>{
-    console.log("screen start", route.name);
-    //requestToServer(page);
+    console.log("---------screen start", route.name);
   },[]);
 
   useEffect(()=>{
-    console.log("server data updated");
-    if(serverData.length > 0){
-      setRefresh(false);
-      setClientData([...clientData, ...serverData]);
-      setLoadmore(serverData.length === limit? true : false );
-      setPending_process(false);
+
+    if (firstStartRef.current) {
+      firstStartRef.current = false;
     }else{
-      setLoadmore(false)
+      console.log("server data updated", appName);
+      if(serverData.length > 0){
+        setRefresh(false);
+        setClientData([...clientData, ...serverData]);
+        setLoadmore(serverData.length === limit? true : false );
+        setPending_process(false);
+      }else{
+        setLoadmore(false)
+      }
     }
+
   },[serverData]);
-/*
-  useEffect(()=>{
-    console.log("client data updated");
-    if(parseType === "html") {
-      unfoldData()
-    }
-  },[clientData]);*/
+
+
 
 
   useEffect(()=>{
