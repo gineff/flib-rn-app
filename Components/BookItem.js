@@ -16,15 +16,54 @@ const Cover = ({item})=> {
 };
 
 
-const Author = ({author, navigation, style})=> {
-  return (<View>
-      {author.map((el,i)=>
-          (<Text {...{style}} onPress = {()=> {navigation.push("Author",{query:el.id});}} key={i}>{el.name} </Text>))}
-  </View>)
-};
 
 export default ({book, navigation})=> {
   const {item, index} = book;
+
+  const Authors = () => {
+    return (<>
+      {item.author.map(author => <Author key={author.id}>{author}</Author>)}
+    </>)
+  };
+
+  const Author = ({children})=> {
+    return (
+      (<Text
+          style={{color:'#f4511e', paddingLeft: 15}}
+          onPress = {()=> {navigation.push("BookList",{query: children.id, queryType: "author"});}}
+          key={children.id}>
+        {children.name}
+      </Text>)
+    )
+  };
+
+  const Content = ({children})=> {
+    const content = item.content && item.content
+        .replace(/<br\/>(.*?)$/g,"")
+        .replace(/<p class=\"book"\>/g,"\t")
+        .replace(/(<\/p>)|(<br>)|(<b>)|(<\/b>)|(<i>)|(<\/i>)/g,"");
+
+    return <>{item.content && (<Text numberOfLines={10}   style={{paddingTop: 5}}>{content}</Text>)}</>
+  };
+
+  const Sequences = () => {
+    return (<>
+      {!!item?.sequencesTitle.length && (
+          <View style={{flexDirection: "row", marginBottom: 5, paddingLeft: 15}}>
+            <Text style={{color:'#f4511e'}}>Серия: </Text>
+            {item.sequencesTitle.map( (el, i)=> (
+                <Sequence key={i} sequencesId={item.sequencesId[i]}>{el}</Sequence>))}
+          </View>)}
+
+    </>)
+  };
+
+  const Sequence = ({sequencesId, children})=> {
+    const handlePress = ()=> {
+      navigation.push("BookList",{query: sequencesId, queryType: "sequence"})
+    };
+    return <Text onPress={handlePress} style={{color:'#f4511e'}}>{children}</Text>
+  };
 
   return (
       <View style={styles.listItem} >
@@ -32,17 +71,12 @@ export default ({book, navigation})=> {
           <Cover  item={item}/>
           <Text style={{textAlign: 'center', fontWeight: "bold"}}>{item?.year}</Text>
         </View>
-        <View style={{flexDirection: "column", paddingHorizontal: 0,  flex: 1, width: "100%", maxHeight: 170}}>
+        <View style={{flexDirection: "column", paddingHorizontal: 0,  flex: 1, width: "100%"}}>
           {/*title*/}
           <Text onPress = {()=> {navigation.navigate("Book",{book})}} style={{fontWeight: "bold", paddingBottom: 5}}>{index+". "+item.title}</Text>
-          {/*sequence*/}
-          {!!item.sequencesTitle.length && (<Text style={{color:'#f4511e', marginBottom: 5}}>Серия: {item.sequencesTitle.join("; ")}</Text>)}
-          {/*author*/}
-          <Author style={{color:'#f4511e'}} author = {item.author} navigation = {navigation}/>
-          {item.content && (<Text style={{paddingTop: 5}}>
-            {item.content.replace(/(<p class=\"book"\>)|(<\/p>)|(<br>)|(<i>)|(<\/i>)/g,"").replace(/<br\/>/,"\n").replace(/<br\/>/g," ")}
-          </Text>)}
-
+          <Sequences/>
+          <Authors/>
+          <Content/>
         </View>
       </View>
   )

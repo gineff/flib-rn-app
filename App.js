@@ -30,16 +30,7 @@ const Sidebar = (props)=> {
           headerTitleAlign: 'center'
       }}
       drawerContent={(props) => <CustomSidebarMenu {...props} />}>
-      <Drawer.Screen
-          name="Новинки за неделю"
-          initialParams={{queryType: "week", parseType: "xml"}}
-          options={{
-            groupName: 'Новики',
-            drawerLabel: 'Новинки за неделю',
-            activeTintColor: '#f4511e',
-          }}
-          component={NewBooks}
-      />
+
       <Drawer.Screen
           name="Популярные книги за день"
           initialParams={{queryType: "popularDay", parseType: "html"}}
@@ -60,7 +51,16 @@ const Sidebar = (props)=> {
           }}
           component={NewBooks}
       />
-
+      <Drawer.Screen
+          name="Новинки за неделю"
+          initialParams={{queryType: "week", parseType: "xml"}}
+          options={{
+            groupName: 'Новики',
+            drawerLabel: 'Новинки за неделю',
+            activeTintColor: '#f4511e',
+          }}
+          component={NewBooks}
+      />
 
     </Drawer.Navigator>
 };
@@ -76,15 +76,14 @@ export default function App() {
               options={{ headerShown: false }}
           />
         <Stack.Screen
-            name="Author"
+            name="BookList"
             component={NewBooks}
-            initialParams={{queryType: "author", parseType: "xml"}}
+            initialParams={{parseType: "xml"}}
         />
         <Stack.Screen
             name="Book"
             component={Book}
         />
-        {/*   {newBooksData.map((el=> (<Stack.Screen key={el.name} name={el.name} initialParams={{queryType: el.name}} component={NewBooks}/>)))} */}
       </Stack.Navigator>
   </NavigationContainer>)
 }

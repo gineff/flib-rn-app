@@ -32,6 +32,7 @@ const generateUrl = ({page, params}) => {
 
 export default ({navigation, route})=> {
 
+
   const flatListRef = useRef(null);
   const [limit] = useState(20);
   const [page, setPage] = useState(1);
@@ -70,12 +71,31 @@ export default ({navigation, route})=> {
     }))
   };
 
+  const searchBookByAuthor = async (book, searchPage = 1)=> {
+    console.log("search in opds by author", searchPage, book.title);
+    const str = book.title.replace(/\[.*?\]/g,"");
+    const text = await getText("/opds/author/" + book.author[0].id + "/time"+"/"+(searchPage-1));
+    const data = xmlParserFlibusta(text);
+    const filteredData = data.filter(el => el.bid === book.bid)[0];
+    if(data.length === 20 && filteredData === undefined){
+      return await searchBookByAuthor(book, ++searchPage);
+    }else{
+      return filteredData;
+    }
+  };
+
   const searchBook = async (book)=> {
     console.log("search in opds", book.title);
     const str = book.title.replace(/\[.*?\]/g,"");
     const text = await getText(searchUrl+encodeURIComponent(str));
     const data = xmlParserFlibusta(text);
-    return data.filter(el => el.bid === book.bid)[0];
+    const filteredData = data.filter(el => el.bid === book.bid)[0];
+    if(data.length === 0 || (data.length === 20 && filteredData === undefined)){
+      return await searchBookByAuthor(book);
+    }else{
+      console.log(data, filteredData, book);
+      return filteredData;
+    }
   };
 
   const unfold = async (data)=> {
