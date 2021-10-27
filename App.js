@@ -1,94 +1,118 @@
-import React, {useEffect, useState} from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import React from 'react';
+import { StyleSheet, Button} from 'react-native';
+import Icon from "react-native-vector-icons/Ionicons";
+import { Colors } from './Styles'
 
-import { StyleSheet, Text, View, Button } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
 import {createDrawerNavigator} from '@react-navigation/drawer';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
+import {BooksProvider}  from "./Provider/BooksProvider";
+
 import CustomSidebarMenu from "./CustomSidebarMenu";
-import BooksProvider  from "./Provider/BooksProvider";
-import NewBooks  from "./Components/NewBooks";
 import Book  from "./Components/Book";
 import BooksView from "./Components/BooksView";
-import {TasksView} from "../realm-tutorial-react-native/views/TasksView";
 
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
 
-const appId = "application-0-rgont";
+const provider = (props)=> {
+  const { navigation, route} = props;
+  const params = props.route.params;
+  return (<BooksProvider {...params}>
+    <BooksView navigation={navigation} route={route} />
+  </BooksProvider>)
+}
 
+const screenOptions = ({navigation, route})=>({
+  headerStyle: {
+    backgroundColor: Colors.prime,
+  },
+  headerTintColor: '#fff',
+  headerTitleAlign: 'center',
+  headerRight: () => (
+    <Icon.Button
+      onPress={() => alert('This is a button!')}
+      name="filter"
+      color="#FFF"
+      backgroundColor={Colors.prime}
+    />
+  )
+})
 
 const Sidebar = (props)=> {
   return     <Drawer.Navigator
-    screenOptions={{
-      headerStyle: {
-          backgroundColor: '#f4511e',
-      },
-      headerTintColor: '#fff',
-      headerTitleAlign: 'center'
-    }}
-    initialRouteName = "NewForWeek"
+
+    screenOptions={screenOptions}
+    initialRouteName = "newForWeek"
     drawerContent={(props) => <CustomSidebarMenu {...props} />}>
-    //два типа истончика данных:
-    //1. opds библиотека флибусты
-    //2. сайт флибусты
+
     <Drawer.Screen
-      name="Популярные книги за день"
-      initialParams={{queryType: "popularDay", parseType: "html"}}
+      name="popularForDay"
+      initialParams={{queryType: "popularForDay", source: "html", title: "Популярные книги за день"}}
       options={{
         groupName: 'Популярные книги',
         drawerLabel: 'Популярные книги за день',
-        activeTintColor: '#f4511e',
+        activeTintColor: Colors.prime,
       }}
-      component={NewBooks}
-    />
+    >
+      {provider}
+    </Drawer.Screen>
     <Drawer.Screen
-      name="Популярные книги за неделю"
-      initialParams={{queryType: "popularWeek", parseType: "html"}}
+      name="popularForWeek"
+      initialParams={{queryType: "popularForWeek", source: "html", title: "Популярные книги за неделю"}}
       options={{
         groupName: 'Популярные книги',
         drawerLabel: 'Популярные книги за неделю',
-        activeTintColor: '#f4511e',
+        activeTintColor: Colors.prime,
       }}
-      component={NewBooks}
-    />
+    >
+      {provider}
+    </Drawer.Screen>
     <Drawer.Screen
-      name="NewForWeek"
-      initialParams={{getUrl:(page)=>`/opds/new/${page-1}/new/`}}
+      name="newForWeek"
+      initialParams={{queryType: "newForWeek", source: "opds", title: "Новинки за неделю"}}
       options={{
         groupName: 'Новики',
         drawerLabel: 'Новинки за неделю',
-        activeTintColor: '#f4511e',
+        activeTintColor: Colors.prime,
+
       }}
-      component={NewBooks}
-    />
+    >
+      {provider}
+    </Drawer.Screen>
+
+
 
     </Drawer.Navigator>
 };
 
 export default function App() {
 
-
   return (<NavigationContainer>
-    <Stack.Navigator>
+      <Stack.Navigator>
         <Stack.Screen
             name="Sidebar"
             component={Sidebar}
             options={{ headerShown: false }}
         />
-      <Stack.Screen name="Book List">
-        {(props)=> {
-          const params = props.route.params;
-          return (<BooksProvider {{...params}}>
-            <BooksView {{...props}}/>
-          </BooksProvider>)
-        }}
-      </Stack.Screen>
-      <Stack.Screen
-          name="Book"
-          component={Book}
-      />
-    </Stack.Navigator>
-  </NavigationContainer>)
+
+        <Stack.Screen name="BooksList">
+          {provider}
+        </Stack.Screen>
+        <Stack.Screen
+            name="Book"
+        >
+          {(props)=> {
+            const { navigation, route} = props;
+            const params = props.route.params;
+            return (<BooksProvider {...params}>
+              <Book navigation={navigation} route={route} />
+            </BooksProvider>)
+          }}
+        </Stack.Screen>
+      </Stack.Navigator>
+    </NavigationContainer> )
 }
 
 const styles = StyleSheet.create({

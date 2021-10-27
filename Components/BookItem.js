@@ -1,40 +1,31 @@
 import React, {useEffect, useState} from 'react';
 import {StyleSheet, Text, View, Image, TouchableOpacity} from 'react-native';
-
+import Authors from "./Authors";
+import Sequences from "./Sequences";
+import {Colors} from "../Styles"
 const proxyImageUrl ="https://images.weserv.nl/?url=";
 const createImageUrl = (cover)=> {
   return proxyImageUrl+ "http://flibusta.is" + cover +"&h=500" ;
 };
-const Cover = ({item})=> {
- // console.log(item.image)
-  return <View style={{height:157, width: 100, backgroundColor: "lightgrey", marginRight: 10, justifyContent: "center", alignContent: "center"}}>
-    {item.image?
-      (<Image  style={styles.cover} source={{uri: createImageUrl(item.image) }} />) :
-      (<Text style={{textAlign: 'center'}}>{item.title}</Text>)
-    }
-  </View>
-};
+
 
 
 
 export default ({book, navigation})=> {
   const {item, index} = book;
 
-  const Authors = () => {
-    return (<>
-      {item.author.map(author => <Author key={author.id}>{author}</Author>)}
-    </>)
-  };
+  const navigateBook = ()=> {
+    navigation.navigate("Book",{book})
+  }
 
-  const Author = ({children})=> {
-    return (
-      (<Text
-          style={{color:'#f4511e', paddingLeft: 15}}
-          onPress = {()=> {navigation.push("BookList",{query: children.id, queryType: "author"});}}
-          key={children.id}>
-        {children.name}
-      </Text>)
-    )
+  const Cover = ({item})=> {
+    // console.log(item.image)
+    return <TouchableOpacity onPress={navigateBook} style={{height:157, width: 100, backgroundColor: "lightgrey", marginRight: 10, justifyContent: "center", alignContent: "center"}}>
+      {item.image?
+        (<Image  style={styles.cover} source={{uri: createImageUrl(item.image) }} />) :
+        (<Text style={{textAlign: 'center'}}>{item.title}</Text>)
+      }
+    </TouchableOpacity>
   };
 
   const Content = ({children})=> {
@@ -43,39 +34,24 @@ export default ({book, navigation})=> {
         .replace(/<p class=\"book"\>/g,"\t")
         .replace(/(<\/p>)|(<br>)|(<b>)|(<\/b>)|(<i>)|(<\/i>)/g,"");
 
-    return <>{item.content && (<Text numberOfLines={10}   style={{paddingTop: 5}}>{content}</Text>)}</>
+    return <>{item.content && (<Text onPress = {navigateBook} numberOfLines={10}   style={{paddingTop: 5}}>{content}</Text>)}</>
   };
 
-  const Sequences = () => {
-    return (<>
-      {!!item?.sequencesTitle.length && (
-          <View style={{flexDirection: "row", marginBottom: 5, paddingLeft: 15}}>
-            <Text style={{color:'#f4511e'}}>Серия: </Text>
-            {item.sequencesTitle.map( (el, i)=> (
-                <Sequence key={i} sequencesId={item.sequencesId[i]}>{el}</Sequence>))}
-          </View>)}
-
-    </>)
-  };
-
-  const Sequence = ({sequencesId, children})=> {
-    const handlePress = ()=> {
-      navigation.push("BookList",{query: sequencesId, queryType: "sequence"})
-    };
-    return <Text onPress={handlePress} style={{color:'#f4511e'}}>{children}</Text>
-  };
 
   return (
       <View style={styles.listItem} >
         <View  >
-          <Cover  item={item}/>
+          <Cover   item={item}/>
           <Text style={{textAlign: 'center', fontWeight: "bold"}}>{item?.year}</Text>
         </View>
         <View style={{flexDirection: "column", paddingHorizontal: 0,  flex: 1, width: "100%"}}>
           {/*title*/}
-          <Text onPress = {()=> {navigation.navigate("Book",{book})}} style={{fontWeight: "bold", paddingBottom: 5}}>{index+". "+item.title}</Text>
-          <Sequences/>
-          <Authors/>
+          <Text onPress = {navigateBook} style={{fontWeight: "bold", paddingBottom: 5}}>
+            {(index+1)+". "+item.title}</Text>
+          <View style={{paddingLeft:15}}>
+            <Sequences sequencesId={item.sequencesId} sequencesTitle={item.sequencesTitle}/>
+            <Authors authors={item.author}/>
+          </View>
           <Content/>
         </View>
       </View>
