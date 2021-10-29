@@ -12,6 +12,8 @@ const getText = async (url)=> {
 
 const BooksProvider = ({children, queryType, query, source, book})=> {
 
+  console.log('book provider change');
+
   const [books, setBooks] = useState([]);
   const [page, setPage] = useState(1);
 
@@ -104,6 +106,7 @@ const BooksProvider = ({children, queryType, query, source, book})=> {
 
   useEffect(()=> {
     getData()
+
   }, [])
 
   const moreBooks = ()=> {

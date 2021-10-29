@@ -1,6 +1,6 @@
-import React from 'react';
+import React, {useRef, useState} from 'react';
 import { StyleSheet, Button} from 'react-native';
-import Icon from "react-native-vector-icons/Ionicons";
+
 import { Colors } from './Styles'
 
 import { NavigationContainer } from '@react-navigation/native';
@@ -24,23 +24,21 @@ const provider = (props)=> {
   </BooksProvider>)
 }
 
-const screenOptions = ({navigation, route})=>({
-  headerStyle: {
-    backgroundColor: Colors.prime,
-  },
-  headerTintColor: '#fff',
-  headerTitleAlign: 'center',
-  headerRight: () => (
-    <Icon.Button
-      onPress={() => alert('This is a button!')}
-      name="filter"
-      color="#FFF"
-      backgroundColor={Colors.prime}
-    />
-  )
-})
+
 
 const Sidebar = (props)=> {
+
+  const [isModalVisible, setModalVisible] = useState(false);
+
+  const screenOptions = ({navigation, route})=>({
+    headerStyle: {
+      backgroundColor: Colors.prime,
+    },
+    headerTintColor: '#fff',
+    headerTitleAlign: 'center'
+  })
+
+
   return     <Drawer.Navigator
 
     screenOptions={screenOptions}
@@ -76,7 +74,6 @@ const Sidebar = (props)=> {
         groupName: 'Новики',
         drawerLabel: 'Новинки за неделю',
         activeTintColor: Colors.prime,
-
       }}
     >
       {provider}
@@ -88,6 +85,11 @@ const Sidebar = (props)=> {
 };
 
 export default function App() {
+
+  const runFilterCounter  = useRef(0);
+
+  console.log("app render",runFilterCounter.current )
+  runFilterCounter.current = runFilterCounter.current + 1;
 
   return (<NavigationContainer>
       <Stack.Navigator>
