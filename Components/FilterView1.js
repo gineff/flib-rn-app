@@ -8,19 +8,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export default  ({navigation, isModalVisible, setModalVisible})=> {
 
   const runFilterCounter  = useRef(0);
+  const [genresFilterList, setGenresFilter] = useState([]);
   const [genresList, setGenres] = useState([]);
-  const filter = useRef([]);
 
   console.log("filter render", runFilterCounter.current )
   runFilterCounter.current = runFilterCounter.current + 1;
 
   useEffect(()=> {
     AsyncStorage.getItem("GENRES_FILTER", (err, item)=> {
-      filter.current = item? JSON.parse(item) : [];
-      const list = filter.current.length? genres.map(el=>
-        ({...el, data: el.data.map(e=>
-            ({...e, checked: !(filter.current.indexOf(e.id) === -1) }))})) : genres;
-      setGenres(list);
+      if(item) setGenresFilter(JSON.parse(item));
     })
   },[])
 
@@ -28,29 +24,27 @@ export default  ({navigation, isModalVisible, setModalVisible})=> {
     setModalVisible(!isModalVisible);
   };
 
-  const Item = ({ children, id, style, checked}) => (
-    <View style={{...style, flexDirection: "row"}}>
-      <GenreCheckBox id={id}  checked={checked}/>
-      <Text style={{alignSelf: "center"}}>{children}</Text>
-    </View>
-  );
+  const MemoCheckBox = React.memo(GenreCheckBox,()=>{})
 
   const GenreCheckBox = ({id, checked})=> {
 
+    const runCounter = useRef(checked);
     const [toggleCheckBox, setToggleCheckBox] = useState(checked);
 
-    const onCheckBoxChange = (newValue) => {
-      setToggleCheckBox(newValue);
-
-      const set = new Set(filter.current);
-      if(newValue){
+    const onCheckBoxChange = () => {
+      //setToggleCheckBox(newValue);
+      // runCounter.current = newValue;
+      const set = new Set(genresFilterList);
+      if(!checked){
         set.add(id);
       }else{
         set.delete(id)
       }
-      filter.current = (Array.from(set))
+      setGenresFilter(Array.from(set))
     }
 
+
+    runCounter.current = runCounter.current +1;
     return (<CheckBox
     disabled={false}
     value={toggleCheckBox}
@@ -68,10 +62,10 @@ export default  ({navigation, isModalVisible, setModalVisible})=> {
           <Text>Жанр</Text>
 
           <SectionList
-            sections={genresList}
+            sections={genres}
             keyExtractor={(item, index) => item.id + index}
             renderItem={({ item, section }) =>
-              <Item style={{paddingLeft:30}} checked={item.checked} id={item.id}>{item.title}</Item>}
+              <Item style={{paddingLeft:30}} id={item.id}>{item.title}</Item>}
             renderSectionHeader={({ section: { title, id } }) => (
               <Item id={id} >{title}</Item>
             )}
