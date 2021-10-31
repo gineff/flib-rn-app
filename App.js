@@ -12,6 +12,7 @@ import {BooksProvider}  from "./Provider/BooksProvider";
 import CustomSidebarMenu from "./CustomSidebarMenu";
 import Book  from "./Components/Book";
 import BooksView from "./Components/BooksView";
+import FilterView from "./Components/FilterView";
 
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
@@ -112,6 +113,8 @@ export default function App() {
               <Book navigation={navigation} route={route} />
             </BooksProvider>)
           }}
+        </Stack.Screen>
+        <Stack.Screen name="Filter" component={FilterView}>
         </Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer> )

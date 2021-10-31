@@ -14,7 +14,6 @@ export default ({navigation, route}) => {
   const flatListRef = useRef(null);
   const initRef = useRef(true);
   const {title, source} = route.params;
-  const [isModalVisible, setModalVisible] = useState(false);
   const runFilterCounter  = useRef(0);
 
   console.log(uid, "booksView render", runFilterCounter.current )
@@ -25,7 +24,7 @@ export default ({navigation, route}) => {
       title,
       headerRight: () => (
         <Icon.Button
-          onPress={() => {setModalVisible(true)}}
+          onPress={() => {navigation.navigate("Filter")}}
           name="filter"
           color="#FFF"
           backgroundColor={Colors.prime}
@@ -53,7 +52,6 @@ export default ({navigation, route}) => {
   };
 
   return    <View>
-    <FilterView navigation={navigation} isModalVisible={isModalVisible} setModalVisible={setModalVisible}/>
     <FlatList
       ref={flatListRef}
       onRefresh={onRefresh}

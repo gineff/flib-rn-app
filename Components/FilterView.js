@@ -16,17 +16,10 @@ export default  ({navigation, isModalVisible, setModalVisible})=> {
 
   useEffect(()=> {
     AsyncStorage.getItem("GENRES_FILTER", (err, item)=> {
-      filter.current = item? JSON.parse(item) : [];
-      const list = filter.current.length? genres.map(el=>
-        ({...el, data: el.data.map(e=>
-            ({...e, checked: !(filter.current.indexOf(e.id) === -1) }))})) : genres;
-      setGenres(list);
+      filter.current = item ? JSON.parse(item) : [];
     })
   },[])
 
-  const toggleModal = () => {
-    setModalVisible(!isModalVisible);
-  };
 
   const Item = ({ children, id, style, checked}) => (
     <View style={{...style, flexDirection: "row"}}>
