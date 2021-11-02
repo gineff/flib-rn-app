@@ -56,6 +56,10 @@ export default  ({navigation})=> {
       setGroupFilter(list);
     }, [commonFilter])
 
+    useEffect(()=>{
+
+    }, [groupFilter])
+
     const toggleFilter = (id)=> {
 
       const set = new Set(groupFilter);
