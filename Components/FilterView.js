@@ -1,21 +1,35 @@
 import React, { useState, useEffect, useRef } from "react";
-import { ScrollView, Text, View, TouchableWithoutFeedback, TouchableOpacity } from "react-native";
+import { ScrollView, Text, View, Button, TouchableWithoutFeedback, TouchableOpacity } from "react-native";
 import  genres from "../Data/genres.js";
 import CheckBox from "./CheckBox";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from "react-native-vector-icons/Ionicons";
 
-export default  ({navigation, isModalVisible, setModalVisible})=> {
+export default  ({navigation})=> {
 
   const filter = useRef([]);
   const [commonFilter, setCommonFilter] = useState([]);
+  const [buttonState, setButtonState] = useState('clearAll');
+
 
   useEffect(()=> {
-    AsyncStorage.getItem("GENRES_FILTER", (err, item)=> {
-      filter.current = item ? JSON.parse(item) : [];
+    AsyncStorage.getItem("GENRES_FILTER1", (err, item)=> {
+      filter.current = item ? JSON.parse(item) :
+        genres.reduce((arr,el)=>{arr.push(el.id); el.data.forEach(e=> arr.push(e.id)); return arr;},[]);
       setCommonFilter(filter.current);
     })
   },[])
+
+  const clearAll = ()=> {setCommonFilter([]); filter.current = []; setButtonState("markAll")}
+
+  const markAll = ()=>{
+    filter.current = genres.reduce((arr,el)=>{
+      arr.push(el.id); el.data.forEach(e=>
+        arr.push(e.id)); return arr;},[]);
+    console.log(filter.current)
+    setCommonFilter(filter.current);
+    setButtonState("clearAll")
+  }
 
   const Item = ({ children, id, style, toggleFilter, groupFilter}) => {
 
@@ -38,6 +52,7 @@ export default  ({navigation, isModalVisible, setModalVisible})=> {
 
     useEffect(()=> {
       const list  = item.data.reduce((arr, el)=>{ if(commonFilter.includes(el.id)) arr.push(el.id); return arr },[]);
+      if(commonFilter.includes(item.id)) list.push(item.id)
       setGroupFilter(list);
     }, [commonFilter])
 
@@ -85,9 +100,11 @@ export default  ({navigation, isModalVisible, setModalVisible})=> {
 
     )}
 
-
   return (
     <ScrollView style={{ flex: 1, paddingHorizontal: 5 }}>
+
+      {buttonState === "clearAll"? (<Button onPress={clearAll} title="Снять все отметки"/>) :
+        (<Button onPress={markAll} title="Отметить все" />)}
       <Text>Жанр</Text>
       {genres.map(el=>{
         return <GroupItem key={el.id} item={el}/>
