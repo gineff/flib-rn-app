@@ -8,57 +8,68 @@ import Icon from "react-native-vector-icons/Ionicons";
 export default  ({navigation, isModalVisible, setModalVisible})=> {
 
   const filter = useRef([]);
-  const [genreFilter, setGenreFilter] = useState([]);
+  const [commonFilter, setCommonFilter] = useState([]);
+
+  
+
 
   useEffect(()=> {
     AsyncStorage.getItem("GENRES_FILTER", (err, item)=> {
       filter.current = item ? JSON.parse(item) : [];
-      setGenreFilter(filter.current);
+      setCommonFilter(filter.current);
     })
   },[])
 
+  const Item = ({ children, id, style, toggleFilter, groupFilter}) => {
 
+    const checked = groupFilter.includes(id);
+
+    return (
+      <TouchableWithoutFeedback onPress={()=>toggleFilter(id)}>
+        <View style={{...style, flexDirection: "row"}} >
+          <CheckBox id={id} style={{paddingHorizontal: 5}} checked={checked}/>
+          <Text style={{alignSelf: "center"}}>{children}</Text>
+        </View>
+      </TouchableWithoutFeedback>
+
+    )};
 
   const GroupItem = ({item}) => {
 
-    const [groupFilter, setGroupFilter] = useState(item.data);
+    const [groupFilter, setGroupFilter] = useState([]);
     const [isVisible, setVisible] = useState(false);
 
-    const Item = ({ children, id, style}) => {
+    useEffect(()=> {
+      const list  = item.data.reduce((arr, el)=>{ if(commonFilter.includes(el.id)) arr.push(el.id); return arr },[]);
+      setGroupFilter(list);
+    }, [commonFilter])
 
-      const  [checked, setChecked] = useState(false);
+    const toggleFilter = (id)=> {
 
-      useEffect(()=> {
-        setChecked(genreFilter.includes(id))
-      }, [genreFilter])
+      const set = new Set(groupFilter);
 
-      const onToggleCheckbox = ()=> {
-        const set = new Set(filter.current);
-        if(checked) {
-          set.delete(id);
+      if(set.has(id)){
+        if(id<0) {
+          set.clear();
+        }else{
+          set.delete(item.id); set.delete(id)
+        }
+      }else{
+        if(id<0){
+          item.data.forEach(el=> set.add(el.id));
+          set.add(item.id);
         }else{
           set.add(id);
+          if(item.data.length === set.size) set.add(item.id)
         }
-        filter.current = Array.from(set);
-        setChecked(!checked);
-        console.log(filter.current);
       }
-
-      return (
-        <TouchableWithoutFeedback onPress={onToggleCheckbox}>
-          <View style={{...style, flexDirection: "row"}} >
-            <CheckBox id={id} style={{paddingHorizontal: 5}} checked={checked}/>
-            <Text style={{alignSelf: "center"}}>{children}</Text>
-          </View>
-        </TouchableWithoutFeedback>
-
-      )};
-
+      setGroupFilter(Array.from(set));
+    }
 
     return (
       <View>
         <View style={{flexDirection: "row"}}>
-          <Item id={item.id} key={item.id}/>
+          <Item groupFilter={groupFilter} toggleFilter={toggleFilter} id={item.id} key={item.id}/>
           <TouchableOpacity onPress={()=>{ setVisible(!isVisible)}}>
             <View  style={{alignItems:"center", paddingLeft: 5, flexDirection: "row"}}>
               <Text style={{ paddingRight: 5, fontSize:16}}>{item.title}</Text>
@@ -68,7 +79,7 @@ export default  ({navigation, isModalVisible, setModalVisible})=> {
             </View>
           </TouchableOpacity>
         </View>
-        {isVisible && item.data.map(el=> <Item style={{paddingLeft: 25}} id={el.id} key={el.id}>{el.title}</Item>)}
+        {isVisible && item.data.map(el=> <Item groupFilter={groupFilter} toggleFilter={toggleFilter} style={{paddingLeft: 25}} id={el.id} key={el.id}>{el.title}</Item>)}
       </View>
 
     )}
