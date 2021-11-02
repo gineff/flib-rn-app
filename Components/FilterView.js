@@ -10,9 +10,6 @@ export default  ({navigation, isModalVisible, setModalVisible})=> {
   const filter = useRef([]);
   const [commonFilter, setCommonFilter] = useState([]);
 
-  
-
-
   useEffect(()=> {
     AsyncStorage.getItem("GENRES_FILTER", (err, item)=> {
       filter.current = item ? JSON.parse(item) : [];
@@ -50,15 +47,19 @@ export default  ({navigation, isModalVisible, setModalVisible})=> {
 
       if(set.has(id)){
         if(id<0) {
+          //убрать все
           set.clear();
         }else{
+          //убрать пункт и группу
           set.delete(item.id); set.delete(id)
         }
       }else{
         if(id<0){
+          //отметить все в т.ч. группу
           item.data.forEach(el=> set.add(el.id));
           set.add(item.id);
         }else{
+          //отметить пункт и группу если все пункты отмечены
           set.add(id);
           if(item.data.length === set.size) set.add(item.id)
         }
