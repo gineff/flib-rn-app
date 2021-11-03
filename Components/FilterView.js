@@ -49,18 +49,13 @@ export default  ({navigation})=> {
   //Components
 
   const Item = ({ children, id, style, toggleFilter, groupFilter}) => {
-
     const checked = groupFilter.includes(id);
 
     return (
-      <TouchableWithoutFeedback onPress={()=>toggleFilter(id)}>
-        <View style={{...style, flexDirection: "row"}} >
-          <CheckBox id={id} style={{paddingHorizontal: 5}} checked={checked}/>
-          <Text style={{alignSelf: "center"}}>{children}</Text>
-        </View>
-      </TouchableWithoutFeedback>
-
-    )};
+      <CheckBox  onPress={()=>toggleFilter(id)} style={{...style, paddingHorizontal: 5}} checked={checked}>
+            <Text style={{alignSelf: "center"}}>{children}</Text>
+          </CheckBox>
+  )};
 
   const GroupItem = ({item}) => {
 
