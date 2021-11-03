@@ -2,36 +2,51 @@ import React, { useState, useEffect, useRef } from "react";
 import { ScrollView, Text, View, Button, TouchableWithoutFeedback, TouchableOpacity } from "react-native";
 import  genres from "../Data/genres.js";
 import CheckBox from "./CheckBox";
+import {Colors} from "../Styles";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from "react-native-vector-icons/Ionicons";
 
 export default  ({navigation})=> {
 
-  //ref хранение состояния фильра без перерисовки дерева при каждом нажатии чекбокс
+  //ref хранение состояния фильра без перерисовки всего дерева при каждом нажатии чекбокс
   const filter = useRef([]);
-  const [commonFilter, setCommonFilter] = useState([]);
   const [buttonState, setButtonState] = useState('clearAll');
+  const [update, setUpdate] = useState(false);
 
 
   useEffect(()=> {
-    AsyncStorage.getItem("GENRES_FILTER1", (err, item)=> {
-      filter.current = item ? JSON.parse(item) : getAll;
-      setCommonFilter(filter.current);
+    AsyncStorage.getItem("GENRES_FILTER", (err, item)=> {
+      filter.current = item ? JSON.parse(item) : getAll();
+      setUpdate(true);
     })
   },[])
 
+  //methods
+
   const getAll = ()=> genres.reduce((arr,el)=>{arr.push(el.id); el.data.forEach(e=> arr.push(e.id)); return arr;},[]);
 
-  const clearAll = ()=> {setCommonFilter([]); filter.current = []; setButtonState("markAll")}
+  const getByGroup = (items)=> items.reduce((arr,el)=>{if(filter.current.includes(el.id)) arr.push(el.id); return arr},[])
 
-  const markAll = ()=>{
-    filter.current = genres.reduce((arr,el)=>{
-      arr.push(el.id); el.data.forEach(e=>
-        arr.push(e.id)); return arr;},[]);
-    console.log(filter.current)
-    setCommonFilter(filter.current);
-    setButtonState("clearAll")
+  const clearAll = ()=> {filter.current = []; updateFilter(); setButtonState("markAll")}
+
+  const markAll = ()=> {filter.current = getAll(); updateFilter(); setButtonState("clearAll")}
+
+  const updateFilter = (id, list)=> {
+    if(id) {
+      console.log("filter 1", filter.current)
+      const set = new Set(filter.current);
+      const group = genres.filter(el=> el.id === id)[0];
+      set.delete(id);
+      group.data.forEach(el=> set.delete(el.id));
+      console.log("filter 2", Array.from(set))
+      list.forEach(id=> set.add(id));
+      filter.current = Array.from(set);
+      console.log("filter 3", filter.current)
+    }
+    AsyncStorage.setItem("GENRES_FILTER", JSON.stringify(filter.current))
   }
+
+  //Components
 
   const Item = ({ children, id, style, toggleFilter, groupFilter}) => {
 
@@ -53,14 +68,14 @@ export default  ({navigation})=> {
     const [isVisible, setVisible] = useState(false);
 
     useEffect(()=> {
-      const list  = item.data.reduce((arr, el)=>{ if(commonFilter.includes(el.id)) arr.push(el.id); return arr },[]);
-      if(commonFilter.includes(item.id)) list.push(item.id)
-      setGroupFilter(list);
-    }, [commonFilter])
+      if(update) {
+        const list = getByGroup(item.data);
+        if(filter.current.includes(item.id)) list.push(item.id);
+        setGroupFilter(list);
+      }
+    }, [update])
 
-    useEffect(()=>{
 
-    }, [groupFilter])
 
     const toggleFilter = (id)=> {
 
@@ -85,7 +100,9 @@ export default  ({navigation})=> {
           if(item.data.length === set.size) set.add(item.id)
         }
       }
-      setGroupFilter(Array.from(set));
+      const list = Array.from(set);
+      updateFilter(item.id, list)
+      setGroupFilter(list);
     }
 
     return (
@@ -106,15 +123,14 @@ export default  ({navigation})=> {
 
     )}
 
+  //Render
+
   return (
     <ScrollView style={{ flex: 1, paddingHorizontal: 5 }}>
-
-      {buttonState === "clearAll"? (<Button onPress={clearAll} title="Снять все отметки"/>) :
-        (<Button onPress={markAll} title="Отметить все" />)}
+      {buttonState === "clearAll"? (<Button style={{width: 40, backgroundColor: Colors.prime}} onPress={clearAll} title="Снять все отметки"/>) :
+        (<Button style={{width: "80%"}} onPress={markAll} title="Отметить все" />)}
       <Text>Жанр</Text>
-      {genres.map(el=>{
-        return <GroupItem key={el.id} item={el}/>
-      } )}
+      {genres.map(el=> <GroupItem key={el.id} item={el}/>  )}
     </ScrollView>
   );
 }
