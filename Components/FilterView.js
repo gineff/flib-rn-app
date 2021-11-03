@@ -7,6 +7,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 
 export default  ({navigation})=> {
 
+  //ref хранение состояния фильра без перерисовки дерева при каждом нажатии чекбокс
   const filter = useRef([]);
   const [commonFilter, setCommonFilter] = useState([]);
   const [buttonState, setButtonState] = useState('clearAll');
@@ -14,11 +15,12 @@ export default  ({navigation})=> {
 
   useEffect(()=> {
     AsyncStorage.getItem("GENRES_FILTER1", (err, item)=> {
-      filter.current = item ? JSON.parse(item) :
-        genres.reduce((arr,el)=>{arr.push(el.id); el.data.forEach(e=> arr.push(e.id)); return arr;},[]);
+      filter.current = item ? JSON.parse(item) : getAll;
       setCommonFilter(filter.current);
     })
   },[])
+
+  const getAll = ()=> genres.reduce((arr,el)=>{arr.push(el.id); el.data.forEach(e=> arr.push(e.id)); return arr;},[]);
 
   const clearAll = ()=> {setCommonFilter([]); filter.current = []; setButtonState("markAll")}
 
