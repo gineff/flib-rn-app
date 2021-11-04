@@ -1,18 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
-import { ScrollView, Text, View, Button, TouchableWithoutFeedback, TouchableOpacity } from "react-native";
+import { ScrollView, Text, View, Button, SectionList ,TouchableWithoutFeedback, TouchableOpacity } from "react-native";
 import  genres from "../Data/genres.js";
 import CheckBox from "./CheckBox";
 import {Colors} from "../Styles";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from "react-native-vector-icons/Ionicons";
 
-export default  ({navigation})=> {
+export default  ({navigation, route})=> {
 
   //ref хранение состояния фильра без перерисовки всего дерева при каждом нажатии чекбокс
   const filter = useRef([]);
   const [buttonState, setButtonState] = useState('clearAll');
   const [update, setUpdate] = useState(false);
-
+  const {queryType} = route.params;
 
   useEffect(()=> {
     AsyncStorage.getItem("GENRES_FILTER", (err, item)=> {
@@ -118,9 +118,18 @@ export default  ({navigation})=> {
 
     )}
 
+  const GenreList = ()=> {
+    return (<SectionList
+      sections={genres}
+      keyExtractor={(item, index) => item + index}
+      renderItem={({ item }) => <Item title={item} />}
+      renderSectionHeader={({ section: { title } }) => (
+        <Text style={styles.header}>{title}</Text>
+      )}
+    />)
+  }
   //Render
-
-  return (
+  return queryType === "newForWeek"? (<NewPanel/>) : (
     <ScrollView style={{ flex: 1, paddingHorizontal: 5 }}>
       {buttonState === "clearAll"? (<Button style={{width: 40, backgroundColor: Colors.prime}} onPress={clearAll} title="Снять все отметки"/>) :
         (<Button style={{width: "80%"}} onPress={markAll} title="Отметить все" />)}
