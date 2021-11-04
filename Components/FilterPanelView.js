@@ -4,6 +4,7 @@ import CheckBox from "./CheckBox";
 import {Text, TouchableOpacity, View, StyleSheet} from "react-native";
 import {Colors} from "../Styles";
 import Icon from "react-native-vector-icons/Ionicons";
+import {useFocusEffect} from "@react-navigation/native";
 
 const CheckBoxUseFilter = ()=> {
   const [useFilter, setUseFilter] = useState(false)
@@ -25,62 +26,67 @@ const CheckBoxUseFilter = ()=> {
     </CheckBox>)
 }
 
-
-
-const PopularPanel = ()=> {
-  return (<View style={styles.panel}>
-    <CheckBoxUseFilter/>
-    <TouchableOpacity  title="OK"   style={{borderWidth:  1, borderColor: "#FFF",
-      borderRadius: 5, padding: 7, paddingHorizontal: 15, height: 35}}   color={Colors.prime} >
-      <Text>OK</Text>
-    </TouchableOpacity>
-    <View style={{ justifyContent: "flex-end", justifySelf: "flex-end"}}>
-      <Icon.Button
-        onPress={()=>navigation.navigate("Filter")}
-        name="options"
-        backgroundColor={Colors.prime}
-        size={30}
-        color="#FFF"/>
-    </View>
-  </View>)
-}
-
-const NewPanel = ()=> {
-
-  const [filter, setFilter] = useState({id:0, title: "Все жанры"})
-
-  useEffect(()=> {
-    AsyncStorage.getItem("NEW_BOOK_FILTER", (err, res)=> {
-      if(res) setFilter(JSON.parse(res));
-    })
-  }, [])
-
-  return (
-    <View style={{...styles.panel, justifyContent: "center"}}>
-      <TouchableOpacity onPress={()=>{}}>
-        <View style={{flexDirection: "row"}}>
-          <Text style={{color: "#FFF", fontSize:20, paddingRight: 5, textDecorationLine: 'underline',}}>{filter.title}</Text>
-          <Icon
-            name="options"
-            backgroundColor={Colors.prime}
-            size={30}
-            color="#FFF"/>
-        </View>
-      </TouchableOpacity>
-      <TouchableOpacity  title="OK"   style={{borderWidth:  1, borderColor: "#FFF", marginLeft: 25,
-        borderRadius: 5, padding: 7, paddingHorizontal: 15, height: 35}}   color={Colors.prime} >
-        <Text style={{color: "#FFF"}}>OK</Text>
-      </TouchableOpacity>
-    </View>
-  )
-}
-
 const FilterPanel = ({navigation, queryType})=> {
+
+  const PopularPanel = ()=> {
+    return (<View style={styles.panel}>
+      <CheckBoxUseFilter/>
+      <TouchableOpacity  title="OK"   style={{borderWidth:  1, borderColor: "#FFF",
+        borderRadius: 5, padding: 7, paddingHorizontal: 15, height: 35}}   color={Colors.prime} >
+        <Text>OK</Text>
+      </TouchableOpacity>
+      <View style={{ justifyContent: "flex-end", justifySelf: "flex-end"}}>
+        <Icon.Button
+          onPress={()=>navigation.navigate("Filter", {queryType})}
+          name="options"
+          backgroundColor={Colors.prime}
+          size={30}
+          color="#FFF"/>
+      </View>
+    </View>)
+  }
+
+  const NewPanel = ()=> {
+
+    const [filter, setFilter] = useState({id:0, title: "Все жанры"})
+
+    /*useEffect(()=> {
+      AsyncStorage.getItem("NEW_BOOK_FILTER", (err, res)=> {
+        if(res) setFilter(JSON.parse(res));
+      })
+    }, [])*/
+
+    useFocusEffect(
+      React.useCallback(() => {
+        AsyncStorage.getItem("NEW_BOOK_FILTER", (err, res)=> {
+          if(res) setFilter(JSON.parse(res));
+        })
+      }, [])
+    );
+
+    return (
+      <View style={{...styles.panel, justifyContent: "center"}}>
+        <TouchableOpacity onPress={()=>navigation.navigate("Filter",{queryType})}>
+          <View style={{flexDirection: "row"}}>
+            <Text style={{color: "#FFF", fontSize:20, paddingRight: 5, textDecorationLine: 'underline',}}>{filter.title}</Text>
+            <Icon
+              name="options"
+              backgroundColor={Colors.prime}
+              size={30}
+              color="#FFF"/>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity  title="OK"   style={{borderWidth:  1, borderColor: "#FFF", marginLeft: 25,
+          borderRadius: 5, padding: 7, paddingHorizontal: 15, height: 35}}   color={Colors.prime} >
+          <Text style={{color: "#FFF"}}>OK</Text>
+        </TouchableOpacity>
+      </View>
+    )
+  }
+
   return (
     <View >
       {queryType === "newForWeek"? (<NewPanel/>) : (<PopularPanel/>)}
-
-
     </View>
   )
 }

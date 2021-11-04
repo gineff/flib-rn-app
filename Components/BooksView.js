@@ -5,6 +5,7 @@ import {useBooks} from "../Provider/BooksProvider";
 import Icon from "react-native-vector-icons/Ionicons";
 import {Colors} from "../Styles";
 import FilterPanel from "./FilterPanelView";
+import { useFocusEffect } from '@react-navigation/native';
 
 export default ({navigation, route}) => {
 
@@ -39,6 +40,8 @@ export default ({navigation, route}) => {
       setRefresh(false);
     }
   },[books])
+
+
 
   const handleLoadMore = () => {
     if (source !== "html" && !refresh) {

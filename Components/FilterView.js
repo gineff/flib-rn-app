@@ -6,7 +6,8 @@ import {Colors} from "../Styles";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from "react-native-vector-icons/Ionicons";
 
-export default  ({navigation, route})=> {
+
+const FilterMultiList = ({navigation, route})=> {
 
   //ref хранение состояния фильра без перерисовки всего дерева при каждом нажатии чекбокс
   const filter = useRef([]);
@@ -53,9 +54,9 @@ export default  ({navigation, route})=> {
 
     return (
       <CheckBox  onPress={()=>toggleFilter(id)} style={{...style, paddingHorizontal: 5}} checked={checked}>
-            <Text style={{alignSelf: "center"}}>{children}</Text>
-          </CheckBox>
-  )};
+        <Text style={{alignSelf: "center"}}>{children}</Text>
+      </CheckBox>
+    )};
 
   const GroupItem = ({item}) => {
 
@@ -129,7 +130,7 @@ export default  ({navigation, route})=> {
     />)
   }
   //Render
-  return queryType === "newForWeek"? (<NewPanel/>) : (
+  return  (
     <ScrollView style={{ flex: 1, paddingHorizontal: 5 }}>
       {buttonState === "clearAll"? (<Button style={{width: 40, backgroundColor: Colors.prime}} onPress={clearAll} title="Снять все отметки"/>) :
         (<Button style={{width: "80%"}} onPress={markAll} title="Отметить все" />)}
@@ -138,4 +139,45 @@ export default  ({navigation, route})=> {
     </ScrollView>
   );
 }
+
+
+
+const FilterSimpleList = ({navigation})=> {
+
+  const handleSelect = (item)=> {
+    AsyncStorage.setItem("NEW_BOOK_FILTER", JSON.stringify(item), ()=> {navigation.goBack()} )
+  }
+
+  const SimpleItem = ({title, id, style})=> {
+    return (
+      <TouchableOpacity onPress={()=> {handleSelect({id, title})}} >
+        <View style={{...style, paddingVertical: 5, flexDirection: "row"}}>
+          <Icon style={{alignSelf: "center"}} name="radio-button-off"/>
+          <Text style={{fontSize: 18, paddingLeft: 5}}>{title}</Text>
+        </View>
+      </TouchableOpacity>)
+  }
+
+  return (
+    <View>
+      <SimpleItem style={{paddingLeft: 10}} title="Все жанры" id={0}/>
+      <SectionList
+        sections={genres}
+        keyExtractor={(item, index) => item.id + index}
+        renderItem={({ item, section }) => (<SimpleItem style={{paddingLeft: 25}} id={item.id} title={item.title}/>)}
+        renderSectionHeader={({ section: { title, id } }) =>
+          (<Text style={{paddingLeft: 10, fontSize: 18, color: Colors.prime}}>{title}</Text>)}
+      />
+    </View>
+   )
+}
+
+export default (props) => {
+  const {route} = props;
+  const {queryType} = route.params;
+  return queryType === "newForWeek"? <FilterSimpleList {...props}/> : <FilterMultiList {...props}/>
+}
+
+
+export {FilterMultiList, FilterSimpleList}
 
