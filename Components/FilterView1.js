@@ -15,7 +15,7 @@ export default  ({navigation, isModalVisible, setModalVisible})=> {
   runFilterCounter.current = runFilterCounter.current + 1;
 
   useEffect(()=> {
-    AsyncStorage.getItem("GENRES_FILTER", (err, item)=> {
+    AsyncStorage.getItem("POPULAR_BOOK_FILTER", (err, item)=> {
       if(item) setGenresFilter(JSON.parse(item));
     })
   },[])

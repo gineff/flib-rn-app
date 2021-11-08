@@ -1,6 +1,7 @@
 import React, { useContext, useState, useEffect, useRef } from "react";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {xmlParser, htmlParser, commentParser} from "../service/flibustaParser";
+import {set} from "react-native-reanimated";
 const proxyCorsUrl ="https://api.allorigins.win/raw?url=";
 const BooksContext = React.createContext(null);
 
@@ -15,18 +16,22 @@ const BooksProvider = ({children, queryType, query, source, book})=> {
   console.log('book provider change');
 
   const [books, setBooks] = useState([]);
-  const [page, setPage] = useState(1);
+  //const [page, setPage] = useState(1);
+  const refPage = useRef(1);
+  const [filter, setFilter] = useState(false);
+
+
 
   const generateUrl = () => {
 
-    console.log(queryType, query)
     let url;
+    const page = refPage.current;
     if(queryType === "author"){
       url = "/opds/author/" + query + "/time"+"/"+(page-1);
     }else if(queryType === "sequence"){
       url =  "/opds/sequencebooks/"+query+"/"+(page-1);
     }else if(queryType === "genre") {
-      url =  "/opds/new/" + page  + "/newgenres/" + query;
+      url =  "/opds/new/" + (page-1)  + "/newgenres/" + query;
     }else if(queryType === "search") {
       url = '/opds/opensearch?searchType=books&searchTerm=' + query;
       return url;
@@ -34,6 +39,8 @@ const BooksProvider = ({children, queryType, query, source, book})=> {
       url =  "/stat/24";
     }else if(queryType === "popularForWeek"){
       url =  "/stat/w";
+    }else if(queryType === "newForWeek" && filter && filter.id){
+      url =  "/opds/new/" + (page-1)  + "/newgenres/" + filter.id;
     }else if(queryType === "newForWeek"){
       url =  "/opds/new/" + (page - 1) + "/new/" ;
     }
@@ -93,29 +100,48 @@ const BooksProvider = ({children, queryType, query, source, book})=> {
     const url = generateUrl();
     const text = await getText(url);
     const data = source ===  "opds"? await xmlParser(text) : await extendFromStorage(await htmlParser(text));
-    setPage(page+1);
+    //setPage(page+1);
+    refPage.current = refPage.current + 1 ;
     setBooks([...books, ...data]);
   }
 
   useEffect(()=> {
     if(books.length && source === "html"){
       console.log("extend");
-      setTimeout(extendFromOPDS, 300)
+      setTimeout(extendFromOPDS, 100)
     }
   }, [books])
 
+  //где происходит управление фильтром?
+  //в компоненте - затем сигнал в провадйер
+  //в провайдаре
   useEffect(()=> {
-    getData()
 
+    if(filter) {
+      getData();
+    }
+
+  }, [filter])
+
+  useEffect(()=> {
+    AsyncStorage.multiGet(["USE_FILTER", "NEW_BOOK_FILTER", "POPULAR_BOOK_FILTER"], (err, res)=> {
+      let [[key1, useFilter], [key2, newBookFilter], [key3, popularBookFilter]] = res;
+      useFilter = JSON.parse(useFilter);
+      newBookFilter = JSON.parse(newBookFilter);
+      popularBookFilter = JSON.parse(popularBookFilter);
+
+      setFilter({useFilter, newBookFilter, popularBookFilter})
+    })
   }, [])
 
-  const moreBooks = ()=> {
+  const moreBooks = (page)=> {
     //если это Book загружать книги не нужно
+    if(page) refPage.current = page;
     source && getData()
   }
 
   return (
-    <BooksContext.Provider value={{books, moreBooks, getComments}}>
+    <BooksContext.Provider value={{books, moreBooks, getComments, filter, setFilter}}>
       {children}
     </BooksContext.Provider>
   );

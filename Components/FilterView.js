@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ScrollView, Text, View, Button, SectionList ,TouchableWithoutFeedback, TouchableOpacity } from "react-native";
+import { CommonActions } from '@react-navigation/native';
 import  genres from "../Data/genres.js";
 import CheckBox from "./CheckBox";
 import {Colors} from "../Styles";
@@ -16,7 +17,7 @@ const FilterMultiList = ({navigation, route})=> {
   const {queryType} = route.params;
 
   useEffect(()=> {
-    AsyncStorage.getItem("GENRES_FILTER", (err, item)=> {
+    AsyncStorage.getItem("POPULAR_BOOK_FILTER", (err, item)=> {
       filter.current = item ? JSON.parse(item) : getAll();
       setUpdate(true);
     })
@@ -44,7 +45,7 @@ const FilterMultiList = ({navigation, route})=> {
       filter.current = Array.from(set);
       console.log("filter 3", filter.current)
     }
-    AsyncStorage.setItem("GENRES_FILTER", JSON.stringify(filter.current))
+    AsyncStorage.setItem("POPULAR_BOOK_FILTER", JSON.stringify(filter.current))
   }
 
   //Components
@@ -70,8 +71,6 @@ const FilterMultiList = ({navigation, route})=> {
         setGroupFilter(list);
       }
     }, [update])
-
-
 
     const toggleFilter = (id)=> {
 
@@ -119,16 +118,6 @@ const FilterMultiList = ({navigation, route})=> {
 
     )}
 
-  const GenreList = ()=> {
-    return (<SectionList
-      sections={genres}
-      keyExtractor={(item, index) => item + index}
-      renderItem={({ item }) => <Item title={item} />}
-      renderSectionHeader={({ section: { title } }) => (
-        <Text style={styles.header}>{title}</Text>
-      )}
-    />)
-  }
   //Render
   return  (
     <ScrollView style={{ flex: 1, paddingHorizontal: 5 }}>
@@ -140,41 +129,69 @@ const FilterMultiList = ({navigation, route})=> {
   );
 }
 
+const FilterSimpleList = ({navigation, route})=> {
 
-
-const FilterSimpleList = ({navigation})=> {
 
   const handleSelect = (item)=> {
-    AsyncStorage.setItem("NEW_BOOK_FILTER", JSON.stringify(item), ()=> {navigation.goBack()} )
+    navigation.navigate("newForWeek",{"filterUpdate":item})
   }
 
   const SimpleItem = ({title, id, style})=> {
     return (
       <TouchableOpacity onPress={()=> {handleSelect({id, title})}} >
         <View style={{...style, paddingVertical: 5, flexDirection: "row"}}>
-          <Icon style={{alignSelf: "center"}} name="radio-button-off"/>
-          <Text style={{fontSize: 18, paddingLeft: 5}}>{title}</Text>
+          {id>0 && <Icon style={{alignSelf: "center"}} name="radio-button-off"/>}
+          <Text style={{fontSize: 18, paddingLeft: 5, color: (id > 0? "#000" : Colors.prime)}}>{title}</Text>
         </View>
       </TouchableOpacity>)
   }
 
+  const GroupItem = ({item})=> {
+    const [isVisible, setVisible] = useState(false);
+    return (
+      <View>
+        <View style={{flexDirection: "row"}}>
+          <SimpleItem  id={item.id} key={item.id}/>
+          <TouchableOpacity onPress={()=>{ setVisible(!isVisible)}}>
+            <View  style={{alignItems:"center", paddingLeft: 5, flexDirection: "row"}}>
+              <Text style={{ paddingRight: 5, fontSize:16}}>{item.title}</Text>
+              {isVisible?
+                (<Icon  name= "chevron-up-outline"  size={20} color="#000" />) :
+                (<Icon  name= "chevron-down-outline"  size={20} color="#000" />)}
+            </View>
+          </TouchableOpacity>
+        </View>
+        {isVisible && item.data.map(el=> <SimpleItem  style={{paddingLeft: 25}} id={el.id} key={el.id} title={el.title}/>)}
+      </View>
+  )}
+
   return (
-    <View>
-      <SimpleItem style={{paddingLeft: 10}} title="Все жанры" id={0}/>
-      <SectionList
-        sections={genres}
-        keyExtractor={(item, index) => item.id + index}
-        renderItem={({ item, section }) => (<SimpleItem style={{paddingLeft: 25}} id={item.id} title={item.title}/>)}
-        renderSectionHeader={({ section: { title, id } }) =>
-          (<Text style={{paddingLeft: 10, fontSize: 18, color: Colors.prime}}>{title}</Text>)}
-      />
-    </View>
+      <ScrollView style={{ flex: 1, paddingHorizontal: 5 }}>
+        <SimpleItem style={{paddingLeft: 10}} title="Все жанры" id={0}/>
+        {genres.map(el=> <GroupItem key={el.id} item={el}/>  )}
+      </ScrollView>
    )
 }
 
 export default (props) => {
-  const {route} = props;
-  const {queryType} = route.params;
+
+  const {navigation, route} = props;
+  const {queryType, setNewBookFilter} = route.params;
+  /*React.useEffect(
+    () =>
+      navigation.addListener('beforeRemove', (e) => {
+        e.preventDefault();
+
+        navigation.dispatch({
+          ...e.data.action,
+          ...CommonActions.setParams({ user: 'Wojtek' }),
+          params: {a:333}
+        });
+      }),
+    [props.navigation]
+  );*/
+
+
   return queryType === "newForWeek"? <FilterSimpleList {...props}/> : <FilterMultiList {...props}/>
 }
 

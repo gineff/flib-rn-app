@@ -1,11 +1,16 @@
-import  React, {useEffect, useState} from "react";
+import  React, {useEffect, useState, useMemo} from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import CheckBox from "./CheckBox";
 import {Text, TouchableOpacity, View, StyleSheet} from "react-native";
 import {Colors} from "../Styles";
 import Icon from "react-native-vector-icons/Ionicons";
 import {useFocusEffect} from "@react-navigation/native";
+import {useBooks} from "../Provider/BooksProvider";
 
+
+
+//два вида пнели фильтра
+//популярные книги и новые книги
 const CheckBoxUseFilter = ()=> {
   const [useFilter, setUseFilter] = useState(false)
 
@@ -26,9 +31,30 @@ const CheckBoxUseFilter = ()=> {
     </CheckBox>)
 }
 
-const FilterPanel = ({navigation, queryType})=> {
+const FilterPanel = ({navigation, route})=> {
+
+  const {filter, setFilter} = useBooks();
+  const {queryType, filterUpdate} = route.params;
+
+  console.log("route", route);
 
   const PopularPanel = ()=> {
+
+    const [filter, setFilter] = useState({id:0, title: "Все жанры"})
+
+    useEffect(()=> {
+      console.log("filter set")
+    }, [filter])
+
+
+    useFocusEffect(
+      React.useCallback(() => {
+        AsyncStorage.getItem("NEW_BOOK_FILTER", (err, res)=> {
+          if(res) setFilter(JSON.parse(res));
+        })
+      }, [])
+    );
+
     return (<View style={styles.panel}>
       <CheckBoxUseFilter/>
       <TouchableOpacity  title="OK"   style={{borderWidth:  1, borderColor: "#FFF",
@@ -47,28 +73,27 @@ const FilterPanel = ({navigation, queryType})=> {
   }
 
   const NewPanel = ()=> {
-
-    const [filter, setFilter] = useState({id:0, title: "Все жанры"})
-
-    /*useEffect(()=> {
-      AsyncStorage.getItem("NEW_BOOK_FILTER", (err, res)=> {
-        if(res) setFilter(JSON.parse(res));
-      })
-    }, [])*/
+    //в случае если нужно сохранять фильтр
+    //const [newBookFilter, setNewBookFilter] = useState(filter.newBookFilter)
+    //const [newBookFilter, setNewBookFilter] = useState({title: "Все жанры"})
+    const refGenre = React.useRef({title: "Все жанры"})
+    const genre = refGenre.current;
 
     useFocusEffect(
-      React.useCallback(() => {
-        AsyncStorage.getItem("NEW_BOOK_FILTER", (err, res)=> {
-          if(res) setFilter(JSON.parse(res));
-        })
-      }, [])
+      (React.useCallback(() => {
+        //setPage(1);
+        //setGenre(filterUpdate);
+        //if(filterUpdate) genre.current = filterUpdate;
+        //moreBooks(1);
+        //if(filterUpdate) setFilter(filterUpdate);
+      }, []))
     );
 
     return (
       <View style={{...styles.panel, justifyContent: "center"}}>
         <TouchableOpacity onPress={()=>navigation.navigate("Filter",{queryType})}>
           <View style={{flexDirection: "row"}}>
-            <Text style={{color: "#FFF", fontSize:20, paddingRight: 5, textDecorationLine: 'underline',}}>{filter.title}</Text>
+            <Text style={{color: "#FFF", fontSize:20, paddingRight: 5, textDecorationLine: 'underline',}}>{genre?.title}</Text>
             <Icon
               name="options"
               backgroundColor={Colors.prime}

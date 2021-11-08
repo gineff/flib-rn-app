@@ -5,7 +5,6 @@ import {useBooks} from "../Provider/BooksProvider";
 import Icon from "react-native-vector-icons/Ionicons";
 import {Colors} from "../Styles";
 import FilterPanel from "./FilterPanelView";
-import { useFocusEffect } from '@react-navigation/native';
 
 export default ({navigation, route}) => {
 
@@ -56,7 +55,7 @@ export default ({navigation, route}) => {
 
 
   return    <View>
-    {filterIsVisible && <FilterPanel navigation={navigation} queryType={queryType}/>  }
+    {filterIsVisible && <FilterPanel navigation={navigation} route={route}/>  }
     <FlatList
       ref={flatListRef}
       onRefresh={onRefresh}
