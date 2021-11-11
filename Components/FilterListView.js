@@ -6,7 +6,8 @@ import CheckBox from "./CheckBox";
 import {Colors} from "../Styles";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from "react-native-vector-icons/Ionicons";
-
+import BookItem from "./BookItem";
+import {useBooks} from "../Provider/BooksProvider";
 
 const FilterMultiList = ({navigation, route})=> {
 
@@ -129,18 +130,20 @@ const FilterMultiList = ({navigation, route})=> {
   );
 }
 
-const FilterSimpleList = ({navigation, route})=> {
-
+const FilterSimpleList = ({setFilterIsVisible})=> {
+  const {filter, setFilter} = useBooks();
+  const {newBooksFilter} = filter;
 
   const handleSelect = (item)=> {
-    navigation.navigate("newForWeek",{"filterUpdate":item})
+    setFilter({...filter, newBooksFilter: item})
+    setFilterIsVisible(false);
   }
 
   const SimpleItem = ({title, id, style})=> {
     return (
       <TouchableOpacity onPress={()=> {handleSelect({id, title})}} >
         <View style={{...style, paddingVertical: 5, flexDirection: "row"}}>
-          {id>0 && <Icon style={{alignSelf: "center"}} name="radio-button-off"/>}
+          {id>=0 && <Icon style={{alignSelf: "center"}} name="radio-button-off"/>}
           <Text style={{fontSize: 18, paddingLeft: 5, color: (id > 0? "#000" : Colors.prime)}}>{title}</Text>
         </View>
       </TouchableOpacity>)
@@ -166,33 +169,32 @@ const FilterSimpleList = ({navigation, route})=> {
   )}
 
   return (
-      <ScrollView style={{ flex: 1, paddingHorizontal: 5 }}>
-        <SimpleItem style={{paddingLeft: 10}} title="Все жанры" id={0}/>
+    <View style={{ paddingHorizontal: 5 }}>
+      <ScrollView style={{ paddingHorizontal: 5}}>
+        <View style={{flexWrap: "wrap", margin: 10}}>
+          {(<Icon.Button
+            name={newBooksFilter.id === 0? "checkmark-outline" : "close-outline"}
+            backgroundColor= {Colors.secondary}
+            onPress={()=> {handleSelect({title: "Все жанры", id: 0})}}
+            style={{ paddingRight: 15 }}
+          >
+            {newBooksFilter.title}
+          </Icon.Button>)}
+        </View>
         {genres.map(el=> <GroupItem key={el.id} item={el}/>  )}
       </ScrollView>
+    </View>
+
    )
 }
 
 export default (props) => {
 
-  const {navigation, route} = props;
-  const {queryType, setNewBookFilter} = route.params;
-  /*React.useEffect(
-    () =>
-      navigation.addListener('beforeRemove', (e) => {
-        e.preventDefault();
-
-        navigation.dispatch({
-          ...e.data.action,
-          ...CommonActions.setParams({ user: 'Wojtek' }),
-          params: {a:333}
-        });
-      }),
-    [props.navigation]
-  );*/
+  const {navigation, route, setFilterIsVisible} = props;
+  const {queryType} = route.params;
 
 
-  return queryType === "newForWeek"? <FilterSimpleList {...props}/> : <FilterMultiList {...props}/>
+  return queryType === "newForWeek"? <FilterSimpleList setFilterIsVisible={setFilterIsVisible}/> : <FilterMultiList {...props}/>
 }
 
 

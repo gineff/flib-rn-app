@@ -7,8 +7,6 @@ import Icon from "react-native-vector-icons/Ionicons";
 import {useFocusEffect} from "@react-navigation/native";
 import {useBooks} from "../Provider/BooksProvider";
 
-
-
 //два вида пнели фильтра
 //популярные книги и новые книги
 const CheckBoxUseFilter = ()=> {
@@ -33,27 +31,12 @@ const CheckBoxUseFilter = ()=> {
 
 const FilterPanel = ({navigation, route})=> {
 
-  const {filter, setFilter} = useBooks();
+  const {filter, changeState} = useBooks();
   const {queryType, filterUpdate} = route.params;
-
-  console.log("route", route);
 
   const PopularPanel = ()=> {
 
-    const [filter, setFilter] = useState({id:0, title: "Все жанры"})
 
-    useEffect(()=> {
-      console.log("filter set")
-    }, [filter])
-
-
-    useFocusEffect(
-      React.useCallback(() => {
-        AsyncStorage.getItem("NEW_BOOK_FILTER", (err, res)=> {
-          if(res) setFilter(JSON.parse(res));
-        })
-      }, [])
-    );
 
     return (<View style={styles.panel}>
       <CheckBoxUseFilter/>
@@ -73,37 +56,53 @@ const FilterPanel = ({navigation, route})=> {
   }
 
   const NewPanel = ()=> {
-    //в случае если нужно сохранять фильтр
-    //const [newBookFilter, setNewBookFilter] = useState(filter.newBookFilter)
-    //const [newBookFilter, setNewBookFilter] = useState({title: "Все жанры"})
-    const refGenre = React.useRef({title: "Все жанры"})
-    const genre = refGenre.current;
 
-    useFocusEffect(
+    const {newBooksFilter} = filter;
+    const {} = route.params;
+
+    useEffect(()=>{
+
+      //if(filterUpdate && filterUpdate.id !== filter.id) {
+       // changeState();
+       // changeState(1, {...filter, newBooksFilter: filterUpdate})
+        /*setFilter({...filter, newBooksFilter: filterUpdate});
+        getNextPage(1);*/
+      //}
+
+    }, [filterUpdate])
+
+    useEffect(()=>{
+      //if(filterUpdate && filterUpdate.id !== filter.id) {
+      // changeState();
+      // changeState(1, {...filter, newBooksFilter: filterUpdate})
+      /*setFilter({...filter, newBooksFilter: filterUpdate});
+      getNextPage(1);*/
+      //}
+
+    }, [])
+
+    /*useFocusEffect(
       (React.useCallback(() => {
-        //setPage(1);
-        //setGenre(filterUpdate);
-        //if(filterUpdate) genre.current = filterUpdate;
-        //moreBooks(1);
-        //if(filterUpdate) setFilter(filterUpdate);
+        if(filterUpdate && filterUpdate.id !== filter.id) {
+          //setFilter({...filter, newBooksFilter: filterUpdate});
+          //getNextPage(1);
+        }
       }, []))
-    );
+    );*/
 
     return (
       <View style={{...styles.panel, justifyContent: "center"}}>
-        <TouchableOpacity onPress={()=>navigation.navigate("Filter",{queryType})}>
+        <TouchableOpacity onPress={()=>{       changeState()
+          /*navigation.navigate("Filter",{queryType})*/}}>
           <View style={{flexDirection: "row"}}>
-            <Text style={{color: "#FFF", fontSize:20, paddingRight: 5, textDecorationLine: 'underline',}}>{genre?.title}</Text>
+            <Text style={{color: "#FFF", fontSize:20, paddingRight: 5, textDecorationLine: 'underline',}}>
+              {newBooksFilter?.title}</Text>
             <Icon
               name="options"
               backgroundColor={Colors.prime}
               size={30}
               color="#FFF"/>
           </View>
-        </TouchableOpacity>
-        <TouchableOpacity  title="OK"   style={{borderWidth:  1, borderColor: "#FFF", marginLeft: 25,
-          borderRadius: 5, padding: 7, paddingHorizontal: 15, height: 35}}   color={Colors.prime} >
-          <Text style={{color: "#FFF"}}>OK</Text>
         </TouchableOpacity>
       </View>
     )
@@ -125,4 +124,58 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingLeft: 15}
 })
-export default FilterPanel
+
+
+
+const Panel = ({mode, setFilterVisibility})=> {
+  const {filter} = useBooks();
+  const {newBooksFilter} = filter;
+
+  const  singleModePanel =
+    <TouchableOpacity onPress={()=>{setFilterVisibility({panel: false, list: true})}}>
+      <View style={{flexDirection: "row"}}>
+        <Icon
+          name="options"
+          backgroundColor={Colors.prime}
+          size={30}
+          color="#FFF"/>
+        <Text style={{color: "#FFF", fontSize:20, paddingLeft: 10, textDecorationLine: 'underline',}}>
+          {newBooksFilter?.title}
+        </Text>
+        <Icon
+          backgroundColor={Colors.prime}
+          size={30}
+          color="#FFF"
+          name="close-outline"
+          onPress={()=> {setFilterVisibility({panel: false, list: false})}}
+          style={{ justifyContent: "flex-end" }}
+        />
+      </View>
+    </TouchableOpacity>
+
+  const multiModePanel = <>
+    <CheckBoxUseFilter/>
+    <TouchableOpacity  title="OK"   style={{borderWidth:  1, borderColor: "#FFF",
+      borderRadius: 5, padding: 7, paddingHorizontal: 15, height: 35}}   color={Colors.prime} >
+      <Text>OK</Text>
+    </TouchableOpacity>
+    <View style={{ justifyContent: "flex-end", justifySelf: "flex-end"}}>
+      <Icon.Button
+        onPress={()=>{}}
+        name="options"
+        backgroundColor={Colors.prime}
+        size={30}
+        color="#FFF"/>
+    </View></>
+
+  return (
+    <View style={{...styles.panel, justifyContent: "center"}}>
+      {mode === "single"?  singleModePanel : multiModePanel}
+
+    </View>
+
+
+  )
+}
+
+export default Panel
