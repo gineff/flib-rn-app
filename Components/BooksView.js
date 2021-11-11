@@ -4,7 +4,6 @@ import BookItem from "./BookItem";
 import {useBooks} from "../Provider/BooksProvider";
 import Icon from "react-native-vector-icons/Ionicons";
 import {Colors} from "../Styles";
-import FilterPanel from "./FilterPanelView";
 import FilterList from "./FilterListView";
 
 const cutStr = (str)=> {
@@ -29,8 +28,6 @@ export default ({navigation, route}) => {
   console.log(uid, "booksView render", runFilterCounter.current )
   runFilterCounter.current = runFilterCounter.current + 1;
 
-  //?
-
   const filterTitle = (filterIsVisible? "Фильтр по жанрам" : (<View >
     <Text style={{color: "#FFF", fontSize: 18}}>{title}</Text>
     <Text style={{color: "#FFF",  fontSize: 10}}>{cutStr(newBooksFilter?.title)}</Text></View>))
@@ -51,7 +48,6 @@ export default ({navigation, route}) => {
       header.title = filterTitle
 
     }else if(queryType === "author"  && books.length){
-      console.log(books[0].author);
       const author = books[0].author[0].name;
       header.title = author;
     }else if( queryType === "sequence" && books.length){
@@ -61,16 +57,13 @@ export default ({navigation, route}) => {
     }
     navigation.setOptions(header);
   }
-/*
-  useEffect(() => {
-    setHeader()
-  },[filterIsVisible])
-*/
+
   useEffect(()=>{
+    setHeader();
     if(initRef.current){
       initRef.current = false;
     }else{
-      setHeader();
+
       setRefresh(false);
     }
   },[books])
@@ -86,9 +79,7 @@ export default ({navigation, route}) => {
     setRefresh(true);
   };
 
-
   return    <SafeAreaView><View>
-    {filterVisibility.panel && <FilterPanel  setFilterVisibility={setFilterVisibility} mode={queryType === "newForWeek"? "single" : "multi"}  />}
     {filterIsVisible?  (<FilterList setFilterIsVisible={setFilterIsVisible} navigation={navigation}  route={route} />) :
     (<FlatList
       ref={flatListRef}
