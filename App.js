@@ -29,8 +29,6 @@ const provider = (props)=> {
 
 const Sidebar = (props)=> {
 
-  const [isModalVisible, setModalVisible] = useState(false);
-
   const screenOptions = ({navigation, route})=>({
     headerStyle: {
       backgroundColor: Colors.prime,
@@ -39,15 +37,13 @@ const Sidebar = (props)=> {
     headerTitleAlign: 'center'
   })
 
-
   return     <Drawer.Navigator
-
     screenOptions={screenOptions}
     initialRouteName = "newForWeek"
     drawerContent={(props) => <CustomSidebarMenu {...props} />}>
 
     <Drawer.Screen
-      name="popularForDay"
+      name="Популярные за день"
       initialParams={{queryType: "popularForDay", source: "html", title: "Популярные книги за день"}}
       options={{
         groupName: 'Популярные книги',
@@ -58,7 +54,7 @@ const Sidebar = (props)=> {
       {provider}
     </Drawer.Screen>
     <Drawer.Screen
-      name="popularForWeek"
+      name="Популярные за неделю"
       initialParams={{queryType: "popularForWeek", source: "html", title: "Популярные книги за неделю"}}
       options={{
         groupName: 'Популярные книги',
@@ -69,7 +65,7 @@ const Sidebar = (props)=> {
       {provider}
     </Drawer.Screen>
     <Drawer.Screen
-      name="newForWeek"
+      name="Новинки за неделю"
       initialParams={{queryType: "newForWeek", source: "opds", title: "Новинки за неделю"}}
       options={{
         groupName: 'Новики',
@@ -92,33 +88,33 @@ export default function App() {
   console.log("app render",runFilterCounter.current )
   runFilterCounter.current = runFilterCounter.current + 1;
 
+  const screenOptions = ({navigation, route})=>({
+    headerStyle: {
+      backgroundColor: Colors.prime,
+    },
+    headerTintColor: '#fff',
+    headerTitleAlign: 'center'
+  })
+
+
   return (<NavigationContainer>
-      <Stack.Navigator>
+      <Stack.Navigator
+        screenOptions={screenOptions}
+      >
         <Stack.Screen
             name="Sidebar"
             component={Sidebar}
-            options={{ headerShown: false }}
+            options={{
+              headerShown: false
+
+            }}
         />
 
         <Stack.Screen name="BooksList">
-          {(props)=> {
-            const { navigation, route} = props;
-            const params = props.route.params;
-            return (<BooksProvider {...params}>
-              <BooksView navigation={navigation} route={route} />
-            </BooksProvider>)
-          }}
+          {provider}
         </Stack.Screen>
         <Stack.Screen  name="Book">
-          {(props)=> {
-
-            const { navigation, route} = props;
-            const params = props.route.params;
-            return (<BooksProvider {...params}>
-              <Book navigation={navigation} route={route} />
-            </BooksProvider>)
-          }}
-          {}
+          {provider}
         </Stack.Screen>
         <Stack.Screen name="Filter" component={FilterView}>
         </Stack.Screen>

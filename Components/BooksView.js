@@ -13,10 +13,6 @@ const cutStr = (str)=> {
 
 export default ({navigation, route}) => {
 
-
-  console.log('\x1b[36m%s\x1b[0m', "navigation", navigation);
-  console.log('\x1b[36m%s\x1b[0m', "route", route);
-
   const uid = Math.floor(Math.random() * 100);
   const {books, getNextPage, filter} = useBooks();
   const [refresh, setRefresh] = useState(true);
@@ -33,26 +29,48 @@ export default ({navigation, route}) => {
   console.log(uid, "booksView render", runFilterCounter.current )
   runFilterCounter.current = runFilterCounter.current + 1;
 
-  useEffect(() => {
-    navigation.setOptions({
-      title: (filterIsVisible? "Фильтр по жанрам" : (<View >
-        <Text style={{color: "#FFF", fontSize: 18}}>{title}</Text>
-        <Text style={{color: "#FFF",  fontSize: 10}}>{cutStr(newBooksFilter?.title)}</Text></View>)),
-      headerRight: () => (
+  //?
+
+  const filterTitle = (filterIsVisible? "Фильтр по жанрам" : (<View >
+    <Text style={{color: "#FFF", fontSize: 18}}>{title}</Text>
+    <Text style={{color: "#FFF",  fontSize: 10}}>{cutStr(newBooksFilter?.title)}</Text></View>))
+
+  const setHeader = ()=> {
+    const header = {};
+    if (queryType === "newForWeek") {
+      header.headerRight = () => (
         <Icon.Button
-          onPress={()=> {
-            setFilterIsVisible(!filterIsVisible)}}
-          name= "filter"
+          onPress={() => {
+            setFilterIsVisible(!filterIsVisible)
+          }}
+          name="filter"
           color="#FFF"
           backgroundColor={Colors.prime}
         />
-      )});
-  }, [filterIsVisible]);
+      )
+      header.title = filterTitle
 
+    }else if(queryType === "author"  && books.length){
+      console.log(books[0].author);
+      const author = books[0].author[0].name;
+      header.title = author;
+    }else if( queryType === "sequence" && books.length){
+      const sequence = books[0].sequencesTitle[0];
+      header.title = sequence;
+
+    }
+    navigation.setOptions(header);
+  }
+/*
+  useEffect(() => {
+    setHeader()
+  },[filterIsVisible])
+*/
   useEffect(()=>{
     if(initRef.current){
       initRef.current = false;
     }else{
+      setHeader();
       setRefresh(false);
     }
   },[books])
