@@ -4,49 +4,40 @@ import { CommonActions } from '@react-navigation/native';
 import  genres from "../Data/genres.js";
 import CheckBox from "./CheckBox";
 import {Colors} from "../Styles";
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from "react-native-vector-icons/Ionicons";
-import BookItem from "./BookItem";
 import {useBooks} from "../Provider/BooksProvider";
 
-const FilterMultiList = ({navigation, route})=> {
+const FilterMultiList = ({setFilterIsVisible})=> {
+
 
   //ref хранение состояния фильра без перерисовки всего дерева при каждом нажатии чекбокс
-  const filter = useRef([]);
-  const [buttonState, setButtonState] = useState('clearAll');
-  const [update, setUpdate] = useState(false);
-  const {queryType} = route.params;
 
-  useEffect(()=> {
-    AsyncStorage.getItem("POPULAR_BOOK_FILTER", (err, item)=> {
-      filter.current = item ? JSON.parse(item) : getAll();
-      setUpdate(true);
-    })
-  },[])
+  const [buttonState, setButtonState] = useState('clearAll');
+  const {filter, setFilter} = useBooks();
+  const {popularBooksFilter, useFilter} = filter;
+  const [useFilterLocal, setUseFilterLocal] = useState(useFilter);
 
   //methods
-
   const getAll = ()=> genres.reduce((arr,el)=>{arr.push(el.id); el.data.forEach(e=> arr.push(e.id)); return arr;},[]);
+  const refFilter = useRef(popularBooksFilter || getAll());
 
-  const getByGroup = (items)=> items.reduce((arr,el)=>{if(filter.current.includes(el.id)) arr.push(el.id); return arr},[])
+  const getFilterByGroup = (items)=> items.reduce((arr,el)=>{if(refFilter.current.includes(el.id)) arr.push(el.id); return arr},[])
 
-  const clearAll = ()=> {filter.current = []; updateFilter(); setButtonState("markAll")}
+  const clearAll = ()=> {refFilter.current = []; console.log(refFilter.current); updateFilter(); setButtonState("markAll")}
 
-  const markAll = ()=> {filter.current = getAll(); updateFilter(); setButtonState("clearAll")}
+  const markAll = ()=> {refFilter.current = getAll(); updateFilter(); setButtonState("clearAll")}
 
   const updateFilter = (id, list)=> {
     if(id) {
-      console.log("filter 1", filter.current)
-      const set = new Set(filter.current);
+      const set = new Set(refFilter.current);
       const group = genres.filter(el=> el.id === id)[0];
       set.delete(id);
       group.data.forEach(el=> set.delete(el.id));
-      console.log("filter 2", Array.from(set))
       list.forEach(id=> set.add(id));
-      filter.current = Array.from(set);
-      console.log("filter 3", filter.current)
+      refFilter.current = Array.from(set);
+    }else{
+
     }
-    AsyncStorage.setItem("POPULAR_BOOK_FILTER", JSON.stringify(filter.current))
   }
 
   //Components
@@ -66,12 +57,10 @@ const FilterMultiList = ({navigation, route})=> {
     const [isVisible, setVisible] = useState(false);
 
     useEffect(()=> {
-      if(update) {
-        const list = getByGroup(item.data);
-        if(filter.current.includes(item.id)) list.push(item.id);
-        setGroupFilter(list);
-      }
-    }, [update])
+      const list = getFilterByGroup(item.data);
+      if(refFilter.current.includes(item.id)) list.push(item.id);
+      setGroupFilter(list);
+    }, [])
 
     const toggleFilter = (id)=> {
 
@@ -119,16 +108,38 @@ const FilterMultiList = ({navigation, route})=> {
 
     )}
 
-  //Render
+  // Init
+
+
+
+  useEffect(()=> {
+    //refFilter.current =   popularBooksFilter || getAll();
+    //console.log("mount", refFilter.current.slice(0,3))
+  }, [])
+
+  //console.log("render", refFilter.current.slice(0,3))
+
   return  (
-    <ScrollView style={{ flex: 1, paddingHorizontal: 5 }}>
-      {buttonState === "clearAll"? (<Button style={{width: 40, backgroundColor: Colors.prime}} onPress={clearAll} title="Снять все отметки"/>) :
-        (<Button style={{width: "80%"}} onPress={markAll} title="Отметить все" />)}
-      <Text>Жанр</Text>
-      {genres.map(el=> <GroupItem key={el.id} item={el}/>  )}
+    <ScrollView >
+      <View style={{backgroundColor: Colors.prime, padding: 5, paddingLeft: 10}}>
+        <CheckBox onPress={()=> {setUseFilterLocal(!useFilterLocal) }} style={{color: "#FFF"}} checked={useFilterLocal}>
+          <Text style={{alignSelf: "center", color: "#FFF", paddingLeft: 5}}>Использовать фильтр</Text>
+        </CheckBox>
+      </View>
+      <View style={{flexDirection: "row",  padding: 5, paddingLeft: 15}}>
+        {buttonState === "clearAll"?
+          (<Button color = {Colors.secondary} onPress={clearAll} title="Снять все отметки"/>) :
+          (<Button color = {Colors.secondary} onPress={markAll} title="Отметить все" />)}
+      </View>
+      <View style={{paddingLeft: 10}}>
+        {genres.map(el=> <GroupItem key={el.id} item={el}/>  )}
+      </View>
     </ScrollView>
   );
 }
+
+
+
 
 const FilterSimpleList = ({setFilterIsVisible})=> {
   const {filter, setFilter} = useBooks();
@@ -190,11 +201,13 @@ const FilterSimpleList = ({setFilterIsVisible})=> {
 
 export default (props) => {
 
-  const {navigation, route, setFilterIsVisible} = props;
+  const { route, setFilterIsVisible} = props;
   const {queryType} = route.params;
 
 
-  return queryType === "newForWeek"? <FilterSimpleList setFilterIsVisible={setFilterIsVisible}/> : <FilterMultiList {...props}/>
+  return queryType === "newForWeek"?
+    <FilterSimpleList setFilterIsVisible={setFilterIsVisible}/> :
+    <FilterMultiList setFilterIsVisible={setFilterIsVisible}/>
 }
 
 

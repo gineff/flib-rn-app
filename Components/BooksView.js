@@ -20,7 +20,6 @@ export default ({navigation, route}) => {
   const {title, source, queryType} = route.params;
   const runFilterCounter  = useRef(0);
 
-  const [filterVisibility, setFilterVisibility] = useState({panel: false, list: false});
   const [filterIsVisible, setFilterIsVisible] = useState(false);
   const {newBooksFilter} = filter;
 
@@ -32,21 +31,22 @@ export default ({navigation, route}) => {
     <Text style={{color: "#FFF", fontSize: 18}}>{title}</Text>
     <Text style={{color: "#FFF",  fontSize: 10}}>{cutStr(newBooksFilter?.title)}</Text></View>))
 
-  const setHeader = ()=> {
+  const filterIcon = <Icon.Button
+    onPress={() => {
+      setFilterIsVisible(!filterIsVisible)
+    }}
+    name="filter"
+    color="#FFF"
+    backgroundColor={Colors.prime}
+  />
+
+  const setTitle = ()=> {
     const header = {};
     if (queryType === "newForWeek") {
-      header.headerRight = () => (
-        <Icon.Button
-          onPress={() => {
-            setFilterIsVisible(!filterIsVisible)
-          }}
-          name="filter"
-          color="#FFF"
-          backgroundColor={Colors.prime}
-        />
-      )
+      //header.headerRight = () => filterIcon
       header.title = filterTitle
-
+    }else if((queryType === "popularForWeek") || queryType === "popularForDay"){
+      //header.headerRight = () => filterIcon
     }else if(queryType === "author"  && books.length){
       const author = books[0].author[0].name;
       header.title = author;
@@ -58,12 +58,18 @@ export default ({navigation, route}) => {
     navigation.setOptions(header);
   }
 
+  const setHeaderRight = ()=> {
+    navigation.setOptions({headerRight : () => filterIcon});
+  }
+
+  useEffect(()=> (setHeaderRight()), [filterIsVisible])
+
   useEffect(()=>{
-    setHeader();
+    setTitle();
+
     if(initRef.current){
       initRef.current = false;
     }else{
-
       setRefresh(false);
     }
   },[books])

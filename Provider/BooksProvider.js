@@ -126,16 +126,6 @@ const BooksProvider = ({children, queryType, query, source, book})=> {
 
   }, [filter])
 
- /* useEffect(()=> {
-    if(initRef.current){
-      initRef.current = false;
-    }else{
-      //не загружать данные? кто тогда инициатор?
-      getData();
-    }
-  }, [page])*/
-
-
 
   useEffect(()=> {
     AsyncStorage.getItem("FILTERS",(err, res)=> {
