@@ -16,12 +16,14 @@ export default ({navigation, route}) => {
   const {books, getNextPage, filter} = useBooks();
   const [refresh, setRefresh] = useState(true);
   const flatListRef = useRef(null);
-  const initRef = useRef(true);
   const {title, source, queryType} = route.params;
   const runFilterCounter  = useRef(0);
-
   const [filterIsVisible, setFilterIsVisible] = useState(false);
   const {newBooksFilter} = filter;
+
+  /*TODO * пренести сюда обработку фильтра"
+         * добавить фильтр исключение
+   */
 
   //один раз меняется books, другой refreshing
   console.log(uid, "booksView render", runFilterCounter.current )
@@ -40,6 +42,7 @@ export default ({navigation, route}) => {
     backgroundColor={Colors.prime}
   />
 
+  /*TODO упростить*/
   const setTitle = ()=> {
     const header = {};
     if (queryType === "newForWeek") {
@@ -67,6 +70,7 @@ export default ({navigation, route}) => {
   useEffect(()=>{
     setTitle();
 
+    /*TODO refresh false on book loading*/
     if(books.length && refresh) {
       setRefresh(false);
 
