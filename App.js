@@ -114,7 +114,15 @@ export default function App() {
           {provider}
         </Stack.Screen>
         <Stack.Screen  name="Book">
-          {provider}
+          {
+            (props)=> {
+              const { navigation, route} = props;
+              const params = props.route.params;
+              return (<BooksProvider {...params}>
+                <Book navigation={navigation} route={route} />
+              </BooksProvider>)
+            }
+          }
         </Stack.Screen>
         <Stack.Screen name="Filter" component={FilterView}>
         </Stack.Screen>

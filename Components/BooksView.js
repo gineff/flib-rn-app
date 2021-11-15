@@ -67,15 +67,20 @@ export default ({navigation, route}) => {
   useEffect(()=>{
     setTitle();
 
-    if(initRef.current){
+    if(books.length && refresh) {
+      setRefresh(false);
+
+    }
+
+    /*if(initRef.current){
       initRef.current = false;
     }else{
-      setRefresh(false);
-    }
+
+    }*/
   },[books])
 
   const handleLoadMore = () => {
-    if (source !== "html" && !refresh && books.length && books.length% 20 === 0) {
+    if (!refresh && books.length && books.length% 20 === 0) {
       getNextPage();
       setRefresh(true);
     }

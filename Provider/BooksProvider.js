@@ -2,6 +2,7 @@ import React, { useContext, useState, useEffect, useRef } from "react";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {xmlParser, htmlParser, commentParser} from "../service/flibustaParser";
 const proxyCorsUrl ="https://api.allorigins.win/raw?url=";
+const serverUrl = "http://gineff-home.ddns.net:3000/books";
 const BooksContext = React.createContext(null);
 
 const getText = async (url)=> {
@@ -12,12 +13,9 @@ const getText = async (url)=> {
 
 const BooksProvider = ({children, queryType, query, source, book})=> {
 
-
-
   console.log('book provider change');
 
   const [books, setBooks] = useState([]);
-  const [page, setPage] = useState(0);
   const [filter, _setFilter] = useState(false);
   const initRef = useRef(true);
   const refPage = useRef(1);
@@ -41,9 +39,9 @@ const BooksProvider = ({children, queryType, query, source, book})=> {
       url = '/opds/opensearch?searchType=books&searchTerm=' + query;
       return url;
     }else if(queryType === "popularForDay"){
-      url =  "/stat/24";
+      url =  `${serverUrl}/list/24/page/${page}`;
     }else if(queryType === "popularForWeek"){
-      url =  "/stat/w";
+      url =  `${serverUrl}/list/w/page/${page}`;
     }else if(queryType === "newForWeek" && filter?.newBooksFilter?.id){
       url =  "/opds/new/" + (page-1)  + "/newgenres/" + filter.newBooksFilter.id;
     }else if(queryType === "newForWeek"){
@@ -54,69 +52,37 @@ const BooksProvider = ({children, queryType, query, source, book})=> {
     return url;
   };
 
-  const extendFromStorage = async(books)=> {
-    const keys = books.map(book=>`BOOK-${book.bid}`);
-    const values = await AsyncStorage.multiGet(keys);
-    const _books = books.map(book=> {
-      const matched = values.filter(el=> el[0] === `BOOK-${book.bid}`)[0];
-      if(matched[1] === null) return book;
-      else return JSON.parse(matched[1]);
-    });
-    return  _books;
-  }
-
-  const searchBookByAuthor = async (book, searchPage = 1)=> {
-    console.log("search in opds by author", searchPage, book.title);
-    if(!book.author[0].id) return undefined;
-    const text = await getText("/opds/author/" + book.author[0].id + "/time"+"/"+(searchPage-1));
-    const data = xmlParser(text);
-    const filteredData = data.filter(el => el.bid === book.bid)[0];
-    if(data.length === 20 && filteredData === undefined){
-      return await searchBookByAuthor(book, ++searchPage);
-    }else{
-      return filteredData;
-    }
-  };
-
-  const extendFromOPDS = async ()=> {
-    console.log("extendFromOPDS");
-    for(let book of books){
-      if(book.simple){
-        const foundBook = await searchBookByAuthor(book);
-        if(foundBook){
-          AsyncStorage.setItem('BOOK-'+book.bid, JSON.stringify(foundBook));
-        }
-        setBooks(books.map(el=> el.bid === book.bid?
-          (foundBook? foundBook : (el.simple = false) || el) :
-          el
-        ))
-        break;
-      }
-    }
-  }
-
   const getComments = async()=> {
     const text = await getText('/b/'+book.item.bid);
     const data = await commentParser(text);
     return  data;
   }
 
-  const getData = async(resetBooks)=> {
+  const getDataFromOPDS = async ()=> {
     const url = generateUrl();
     const text = await getText(url);
-    const data = source ===  "opds"? await xmlParser(text) : await extendFromStorage(await htmlParser(text));
+    return xmlParser(text);
+  }
+
+  const getDataFromServer = async ()=> {
+    return await fetch(generateUrl()).then(res=>res.json());
+  }
+
+  const getData = async(resetBooks)=> {
+    //топ 100 списки парсяться с сайта flibusta и затем загружаются на сервер
+    //новинки загружаются из OPDS бибилотеки
+    const data = source ===  "opds"? await getDataFromOPDS() : await getDataFromServer();
     const _books = resetBooks? [] : books;
     setBooks([..._books, ...data]);
   }
 
-  useEffect(()=> {
-    if(books.length && source === "html"){
-      console.log("extend");
-      setTimeout(extendFromOPDS, 100)
-    }
-  }, [books])
+  const getNextPage = (nextPage)=> {
+    refPage.current = nextPage || refPage.current+1;
+    getData()
+  }
 
   useEffect(()=> {
+      //избегаем срабатывания при инициализации filter
       if(initRef.current){
         initRef.current = false;
       }else{
@@ -126,27 +92,15 @@ const BooksProvider = ({children, queryType, query, source, book})=> {
 
   }, [filter])
 
-
   useEffect(()=> {
+    //source (html, opds) есть только у списков. Если у потомка нет source (например компонент Book), фильртры
+    //загружать не нужно. Загрузка фильтров вызовет метод getData. для компонента Book это не нужно
+    if(!source) return;
     AsyncStorage.getItem("FILTERS",(err, res)=> {
       _setFilter(res? JSON.parse(res) : {newBooksFilter: {title: "Все жанры", id: 0}, useFilter: false});
     })
 
   }, [])
-
-  const getNextPage = (nextPage)=> {
-    refPage.current = nextPage || refPage.current+1;
-    //если это html загружать книги не нужно
-    source && getData()
-    //setPage(nextPage || page+1)
-    //если это Book загружать книги не нужно
-    //if(page) refPage.current = page;
-    //setPage(nextPage || page+1)
-   // source && getData()
-  }
-
-
-
 
   return (
     <BooksContext.Provider value={{books, getComments, getNextPage, filter, setFilter}}>
