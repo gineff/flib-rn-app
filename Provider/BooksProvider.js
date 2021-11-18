@@ -16,9 +16,10 @@ const BooksProvider = ({children, queryType, query, source, book})=> {
   console.log('book provider change');
 
   const [books, setBooks] = useState([]);
-  const [filter, _setFilter] = useState(false);
+  const [filter, _setFilter] = useState({});
   const initRef = useRef(true);
   const refPage = useRef(1);
+  //AsyncStorage.setItem("FILTERS", JSON.stringify({newBooksFilter: {title: "Все жанры", id: 0}, useFilter: false}));
 
   const setFilter = (value)=> {
     _setFilter(value);
@@ -38,10 +39,12 @@ const BooksProvider = ({children, queryType, query, source, book})=> {
     }else if(queryType === "search") {
       url = '/opds/opensearch?searchType=books&searchTerm=' + query;
       return url;
-    }else if(queryType === "popularForDay"){
-      url =  `${serverUrl}/list/24/page/${page}`;
-    }else if(queryType === "popularForWeek"){
-      url =  `${serverUrl}/list/w/page/${page}`;
+    }else if(queryType === "popularForDay" || queryType === "popularForWeek"){
+      url =  `${serverUrl}/list/${queryType === "popularForWeek"? "w" : "24"}/page/${page}`;
+      if(filter.useFilter && filter?.popularBooksFilter){
+        const strFilter =  JSON.stringify(filter.popularBooksFilter);
+        url = url +"?filter="+encodeURIComponent(strFilter);
+      }
     }else if(queryType === "newForWeek" && filter?.newBooksFilter?.id){
       url =  "/opds/new/" + (page-1)  + "/newgenres/" + filter.newBooksFilter.id;
     }else if(queryType === "newForWeek"){
@@ -97,7 +100,7 @@ const BooksProvider = ({children, queryType, query, source, book})=> {
     //загружать не нужно. Загрузка фильтров вызовет метод getData. для компонента Book это не нужно
     if(!source) return;
     AsyncStorage.getItem("FILTERS",(err, res)=> {
-      _setFilter(res? JSON.parse(res) : {newBooksFilter: {title: "Все жанры", id: 0}, useFilter: false});
+      _setFilter(res !== null? JSON.parse(res) : {newBooksFilter: {title: "Все жанры", id: 0}, useFilter: false});
     })
 
   }, [])

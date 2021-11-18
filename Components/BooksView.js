@@ -13,13 +13,16 @@ const cutStr = (str)=> {
 export default ({navigation, route}) => {
 
   const uid = Math.floor(Math.random() * 100);
-  const {books, getNextPage, filter} = useBooks();
+  const {books, getNextPage, filter, setFilter} = useBooks();
   const [refresh, setRefresh] = useState(true);
   const flatListRef = useRef(null);
   const {title, source, queryType} = route.params;
   const runFilterCounter  = useRef(0);
   const [filterIsVisible, setFilterIsVisible] = useState(false);
   const {newBooksFilter} = filter;
+  const refFilter = useRef(false);
+
+  console.log("filter", filter);
 
   /*TODO * пренести сюда обработку фильтра"
          * добавить фильтр исключение
@@ -65,7 +68,13 @@ export default ({navigation, route}) => {
     navigation.setOptions({headerRight : () => filterIcon});
   }
 
-  useEffect(()=> (setHeaderRight()), [filterIsVisible])
+  useEffect(()=> {
+    if(!filterIsVisible && refFilter.current && refFilter.current !== filter){
+      console.log("refFilter", refFilter.current);
+      setFilter(refFilter.current)
+    }
+    setHeaderRight()
+  }, [filterIsVisible])
 
   useEffect(()=>{
     setTitle();
@@ -95,7 +104,11 @@ export default ({navigation, route}) => {
   };
 
   return    <SafeAreaView><View>
-    {filterIsVisible?  (<FilterList setFilterIsVisible={setFilterIsVisible} navigation={navigation}  route={route} />) :
+    {filterIsVisible?  (<FilterList
+        setFilterIsVisible={setFilterIsVisible}
+        refFilter={refFilter}
+        navigation={navigation}
+        route={route} />) :
     (<FlatList
       ref={flatListRef}
       onRefresh={onRefresh}

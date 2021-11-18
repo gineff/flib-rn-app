@@ -39,7 +39,7 @@ const Sidebar = (props)=> {
 
   return     <Drawer.Navigator
     screenOptions={screenOptions}
-    initialRouteName = "newForWeek"
+    initialRouteName = "Новинки за неделю"
     drawerContent={(props) => <CustomSidebarMenu {...props} />}>
 
     <Drawer.Screen

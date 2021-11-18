@@ -7,37 +7,40 @@ import {Colors} from "../Styles";
 import Icon from "react-native-vector-icons/Ionicons";
 import {useBooks} from "../Provider/BooksProvider";
 
-const FilterMultiList = ({setFilterIsVisible})=> {
+const FilterMultiList = ({setFilterIsVisible, refFilter})=> {
 
 
   //ref хранение состояния фильра без перерисовки всего дерева при каждом нажатии чекбокс
 
   const [buttonState, setButtonState] = useState('clearAll');
-  const {filter, setFilter} = useBooks();
-  const {popularBooksFilter, useFilter} = filter;
+  //const {filter, setFilter} = useBooks();
+  const {popularBooksFilter, useFilter} = refFilter.current;
   const [useFilterLocal, setUseFilterLocal] = useState(useFilter);
 
   //methods
   const getAll = ()=> genres.reduce((arr,el)=>{arr.push(el.id); el.data.forEach(e=> arr.push(e.id)); return arr;},[]);
-  const refFilter = useRef(popularBooksFilter || getAll());
+  const refFilterLocal = useRef(popularBooksFilter || getAll());
 
-  const getFilterByGroup = (items)=> items.reduce((arr,el)=>{if(refFilter.current.includes(el.id)) arr.push(el.id); return arr},[])
+  const getFilterByGroup = (items)=> items.reduce((arr,el)=>{if(refFilterLocal.current.includes(el.id)) arr.push(el.id); return arr},[])
 
-  const clearAll = ()=> {refFilter.current = []; console.log(refFilter.current); updateFilter(); setButtonState("markAll")}
+  const clearAll = ()=> {refFilterLocal.current = []; updateFilter();  setButtonState("markAll")}
 
-  const markAll = ()=> {refFilter.current = getAll(); updateFilter(); setButtonState("clearAll")}
+  const markAll = ()=> {refFilterLocal.current = getAll(); updateFilter(); setButtonState("clearAll")}
 
   const updateFilter = (id, list)=> {
     if(id) {
-      const set = new Set(refFilter.current);
+      const set = new Set(refFilterLocal.current);
       const group = genres.filter(el=> el.id === id)[0];
       set.delete(id);
       group.data.forEach(el=> set.delete(el.id));
       list.forEach(id=> set.add(id));
-      refFilter.current = Array.from(set);
-    }else{
-
+      refFilterLocal.current = Array.from(set);
     }
+
+    refFilter.current = {...refFilter.current, popularBooksFilter: refFilterLocal.current, useFilter: useFilterLocal}
+    console.log("\x1b[32m", "refFilter change");
+    console.log("local", refFilterLocal.current);
+    console.log( "main", refFilter.current, "\x1b[0m");
   }
 
   //Components
@@ -58,7 +61,7 @@ const FilterMultiList = ({setFilterIsVisible})=> {
 
     useEffect(()=> {
       const list = getFilterByGroup(item.data);
-      if(refFilter.current.includes(item.id)) list.push(item.id);
+      if(refFilterLocal.current.includes(item.id)) list.push(item.id);
       setGroupFilter(list);
     }, [])
 
@@ -113,11 +116,12 @@ const FilterMultiList = ({setFilterIsVisible})=> {
 
 
   useEffect(()=> {
-    //refFilter.current =   popularBooksFilter || getAll();
-    //console.log("mount", refFilter.current.slice(0,3))
-  }, [])
+    //refFilter.current = {...refFilter.current, popularBooksFilter: refFilterLocal.current, useFilter: useFilterLocal}
+    //console.log("refFilter change", refFilter.current);
+    updateFilter();
+  }, [useFilterLocal])
 
-  //console.log("render", refFilter.current.slice(0,3))
+
 
   return  (
     <ScrollView >
@@ -141,12 +145,15 @@ const FilterMultiList = ({setFilterIsVisible})=> {
 
 
 
-const FilterSimpleList = ({setFilterIsVisible})=> {
-  const {filter, setFilter} = useBooks();
-  const {newBooksFilter} = filter;
+const FilterSimpleList = ({setFilterIsVisible, refFilter})=> {
+  //const {filter} = useBooks();
+  //const {newBooksFilter} = filter;
+  const {newBooksFilter} = refFilter.current;
+
 
   const handleSelect = (item)=> {
-    setFilter({...filter, newBooksFilter: item})
+    //setFilter({...filter, newBooksFilter: item})
+    refFilter.current = ({...refFilter.current, newBooksFilter: item})
     setFilterIsVisible(false);
   }
 
@@ -201,13 +208,14 @@ const FilterSimpleList = ({setFilterIsVisible})=> {
 
 export default (props) => {
 
-  const { route, setFilterIsVisible} = props;
+  const { route, setFilterIsVisible, refFilter} = props;
   const {queryType} = route.params;
-
+  const {filter} = useBooks();
+  refFilter.current = filter;
 
   return queryType === "newForWeek"?
-    <FilterSimpleList setFilterIsVisible={setFilterIsVisible}/> :
-    <FilterMultiList setFilterIsVisible={setFilterIsVisible}/>
+    <FilterSimpleList setFilterIsVisible={setFilterIsVisible} refFilter={refFilter}/> :
+    <FilterMultiList setFilterIsVisible={setFilterIsVisible} refFilter={refFilter}/>
 }
 
 
