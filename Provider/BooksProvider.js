@@ -79,6 +79,7 @@ const BooksProvider = ({children, queryType, query, source, book})=> {
     setBooks([..._books, ...data]);
   }
 
+
   const getNextPage = (nextPage)=> {
     refPage.current = nextPage || refPage.current+1;
     getData()

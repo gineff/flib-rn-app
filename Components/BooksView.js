@@ -69,6 +69,8 @@ export default ({navigation, route}) => {
   }
 
   useEffect(()=> {
+    /*TODO refFilter.current !== filter не работает и происходит перерисовка, загруженные книги теряются*/
+
     if(!filterIsVisible && refFilter.current && refFilter.current !== filter){
       console.log("refFilter", refFilter.current);
       setFilter(refFilter.current)
