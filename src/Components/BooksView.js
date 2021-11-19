@@ -1,19 +1,49 @@
 import React, {useEffect, useState,useRef} from 'react'
 import {FlatList, Text, View, SafeAreaView} from "react-native";
 import BookItem from "./BookItem";
-import {useBooks} from "../Provider/BooksProvider";
 import Icon from "react-native-vector-icons/Ionicons";
 import {Colors} from "../Styles";
-import FilterList from "./FilterListView";
 
 const cutStr = (str)=> {
   return (str && str.length>35)? str.slice(0,35)+"..." : str;
 }
 
-export default ({navigation, route}) => {
+const GenreItem = ({genre,  navigation})=> {
+  return <View style={{flexDirection: "row"}}>
+    <Text style={{color: Colors.prime, textDecorationLine: 'underline'}}>{genre.title}</Text>
+    <Text> - </Text>
+    <Text style={{color: Colors.secondary}}>{genre.count}</Text>
+  </View>
+}
+
+const Filter = ({refGenres, navigation})=> {
+
+  /*const [genres, setGenres] = useState([]);
+
+  useEffect(()=> {
+    const newGenres = getNewGenres();
+    setGenres(newGenres);
+  }, [])
+
+*/
+  console.log(refGenres.current);
+
+  return (<View>
+    <FlatList
+      data={refGenres.current}
+      onEndReachedThreshold={0.1}
+      keyExtractor={(item, index) => "key"+index}
+      renderItem={({item, index}) => {
+        return (<GenreItem genre={item} navigation={navigation}/>);
+      }}
+    />
+  </View>)
+}
+
+const old =  ({navigation, route}) => {
 
   const uid = Math.floor(Math.random() * 100);
-  const {books, getNextPage, filter, setFilter} = useBooks();
+  const {books, getNextPage, filter, setFilter, refGenres} = useBooks();
   const [refresh, setRefresh] = useState(true);
   const flatListRef = useRef(null);
   const {title, source, queryType} = route.params;
@@ -22,7 +52,7 @@ export default ({navigation, route}) => {
   const {newBooksFilter} = filter;
   const refFilter = useRef(false);
 
-  console.log("filter", filter);
+  //console.log("filter", filter);
 
   /*TODO * пренести сюда обработку фильтра"
          * добавить фильтр исключение
@@ -38,6 +68,7 @@ export default ({navigation, route}) => {
 
   const filterIcon = <Icon.Button
     onPress={() => {
+      console.log("visible filter", filterIsVisible);
       setFilterIsVisible(!filterIsVisible)
     }}
     name="filter"
@@ -70,11 +101,11 @@ export default ({navigation, route}) => {
 
   useEffect(()=> {
     /*TODO refFilter.current !== filter не работает и происходит перерисовка, загруженные книги теряются*/
-
+/*
     if(!filterIsVisible && refFilter.current && refFilter.current !== filter){
-      console.log("refFilter", refFilter.current);
+      //console.log("refFilter", refFilter.current);
       setFilter(refFilter.current)
-    }
+    }*/
     setHeaderRight()
   }, [filterIsVisible])
 
@@ -106,12 +137,8 @@ export default ({navigation, route}) => {
   };
 
   return    <SafeAreaView><View>
-    {filterIsVisible?  (<FilterList
-        setFilterIsVisible={setFilterIsVisible}
-        refFilter={refFilter}
-        navigation={navigation}
-        route={route} />) :
-    (<FlatList
+    {filterIsVisible &&   <Filter refGenres={refGenres} navigation={navigation}/>}
+    <FlatList
       ref={flatListRef}
       onRefresh={onRefresh}
       refreshing={refresh}
@@ -122,6 +149,12 @@ export default ({navigation, route}) => {
       renderItem={({item, index}) => {
         return (<BookItem book={{item, index}} navigation={navigation}/>);
       }}
-    />)}
+    />
   </View></SafeAreaView>
+}
+
+export default ({navigation, route})=> {
+  console.log("render BooksView");
+  console.log(navigation, route);
+  return <View></View>
 }

@@ -44,6 +44,8 @@ const xmlParser = function(xml) {
             book.downloads.push({href: href, type});
           }else if(rel === 'alternate'){
             book.bid = href.split("/").pop();
+          }else if(type === "application/atom+xml;profile=opds-catalog") {
+            book.genreId = href.split("/").pop();
           }
         }
 

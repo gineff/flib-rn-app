@@ -6,12 +6,17 @@ const serverUrl = "http://gineff-home.ddns.net:3000/books";
 const BooksContext = React.createContext(null);
 
 const getText = async (url)=> {
-  console.log("url", 'http://flibusta.is'+url)
+  //console.log("url", 'http://flibusta.is'+url)
+  console.log('\x1b[36m%s\x1b[0m', "url", url);
   return fetch(proxyCorsUrl+encodeURIComponent('http://flibusta.is'+url))
     .then(response=>response.text())
 };
 
-const BooksProvider = ({children, queryType, query, source, book})=> {
+//const BooksProvider = ({children, queryType, query, source, book})=> {
+const BooksProvider = ({children, navigation , route})=> {
+
+  const {queryType, query, source, book} = route.params;
+
 
   console.log('book provider change');
 
@@ -19,6 +24,7 @@ const BooksProvider = ({children, queryType, query, source, book})=> {
   const [filter, _setFilter] = useState({});
   const initRef = useRef(true);
   const refPage = useRef(1);
+  const refGenres = useRef([]);
   //AsyncStorage.setItem("FILTERS", JSON.stringify({newBooksFilter: {title: "Все жанры", id: 0}, useFilter: false}));
 
   const setFilter = (value)=> {
@@ -51,7 +57,6 @@ const BooksProvider = ({children, queryType, query, source, book})=> {
       url =  "/opds/new/" + (page - 1) + "/new/" ;
     }
 
-    console.log('\x1b[36m%s\x1b[0m', "url", url);
     return url;
   };
 
@@ -85,29 +90,39 @@ const BooksProvider = ({children, queryType, query, source, book})=> {
     getData()
   }
 
-  useEffect(()=> {
+  const getSetGenres = async ()=> {
+    const text = await getText("/opds/newgenres");
+    const data = await xmlParser(text);
+    //console.log("data", data);
+    refGenres.current = data.map(el=> ({id: el.genreId, title: el.title, count: +el.content?.split(" ").shift()}));
+    //console.log("genres", refGenres.current);
+  }
+
+  /*useEffect(()=> {
       //избегаем срабатывания при инициализации filter
       if(initRef.current){
         initRef.current = false;
       }else{
         refPage.current = 1;
-        getData(true);
+        //getData(true);
       }
 
-  }, [filter])
+  }, [filter])*/
 
   useEffect(()=> {
     //source (html, opds) есть только у списков. Если у потомка нет source (например компонент Book), фильртры
     //загружать не нужно. Загрузка фильтров вызовет метод getData. для компонента Book это не нужно
     if(!source) return;
-    AsyncStorage.getItem("FILTERS",(err, res)=> {
+    getData(true)
+    getSetGenres();
+    /*AsyncStorage.getItem("FILTERS",(err, res)=> {
       _setFilter(res !== null? JSON.parse(res) : {newBooksFilter: {title: "Все жанры", id: 0}, useFilter: false});
-    })
+    })*/
 
   }, [])
 
   return (
-    <BooksContext.Provider value={{books, getComments, getNextPage, filter, setFilter}}>
+    <BooksContext.Provider value={{books, getComments, getNextPage, refGenres, filter, setFilter}}>
       {children}
     </BooksContext.Provider>
   );
