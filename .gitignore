@@ -43,8 +43,7 @@ buck-out/
 *.keystore
 !debug.keystore
 
-# Bundle artifacts
-*.jsbundle
+# Bundle artifacts*.jsbundle
 
 # CocoaPods
 /ios/Pods/
@@ -52,3 +51,5 @@ buck-out/
 # Expo
 .expo/
 web-build/
+
+src/Data/

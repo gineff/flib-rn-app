@@ -1,58 +1,34 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useCallback} from 'react';
 import {StyleSheet, Text, View, Image, TouchableOpacity} from 'react-native';
-import Authors from "./Authors";
-import Sequences from "./Sequences";
+import {Authors, Sequences, Cover, Content, Genres} from "./BookView"
 import {Colors} from "../Styles"
-const proxyImageUrl ="https://images.weserv.nl/?url=";
-const createImageUrl = (cover)=> {
-  return proxyImageUrl+ "http://flibusta.is" + cover +"&h=500" ;
-};
 
-
-
-
-export default ({book, navigation})=> {
+export default ({book, navigation, onGenreClick})=> {
   const {item, index} = book;
 
   const navigateBook = ()=> {
     navigation.navigate("Book",{book})
   }
 
-  const Cover = ({item})=> {
-    // console.log(item.image)
-    return <TouchableOpacity onPress={navigateBook} style={{height:157, width: 100, backgroundColor: "lightgrey", marginRight: 10, justifyContent: "center", alignContent: "center"}}>
-      {item.image?
-        (<Image  style={styles.cover} source={{uri: createImageUrl(item.image) }} />) :
-        (<Text style={{textAlign: 'center'}}>{item.title}</Text>)
-      }
-    </TouchableOpacity>
-  };
-
-  const Content = ({children})=> {
-    const content = item.content && item.content
-        .replace(/<br\/>(.*?)$/g,"")
-        .replace(/<p class=\"book"\>/g,"\t")
-        .replace(/(<\/p>)|(<br>)|(<b>)|(<\/b>)|(<i>)|(<\/i>)/g,"");
-
-    return <>{item.content && (<Text onPress = {navigateBook} numberOfLines={10}   style={{paddingTop: 5}}>{content}</Text>)}</>
-  };
-
-
   return (
       <View style={styles.listItem} >
-        <View  >
-          <Cover   item={item}/>
-          <Text style={{textAlign: 'center', fontWeight: "bold"}}>{item?.year}</Text>
-        </View>
-        <View style={{flexDirection: "column", paddingHorizontal: 0,  flex: 1, width: "100%"}}>
-          {/*title*/}
-          <Text onPress = {navigateBook} style={{fontWeight: "bold", paddingBottom: 5}}>
-            {(index+1)+". "+item.title}</Text>
-          <View style={{paddingLeft:15}}>
-            <Sequences sequencesId={item.sequencesId} sequencesTitle={item.sequencesTitle}/>
-            <Authors authors={item.author}/>
+        <TouchableOpacity  onPress = {navigateBook} style={{flexDirection: "row"}}>
+          <View>
+            <View style={styles.bookCoverNDateWrapper}>
+                <Cover item={item}/>
+                <Text style={styles.bookYear}>{item?.year}</Text>
+            </View>
           </View>
-          <Content/>
+          <View style={styles.bookWrapper}>
+            {/*title*/}
+            <Text style={styles.bookTitle}>{(index+1)+". "+item.title}</Text>
+            <Authors>{item.author}</Authors>
+            <Sequences item={item}/>
+            <Content>{item.content}</Content>
+          </View>
+        </TouchableOpacity>
+        <View style={styles.listItemBottom}>
+          <Genres onGenreClick={onGenreClick}>{item.genre}</Genres>
         </View>
       </View>
   )
@@ -60,17 +36,44 @@ export default ({book, navigation})=> {
 
 
 const styles = StyleSheet.create({
-  cover: {
-    height: 157,
-    width: 100,
-    marginRight: 10
+
+  bookCoverNDateWrapper: {
+    marginLeft:5,
+    marginTop:5,
+    borderRadius: 5,
+    backgroundColor: Colors.secondary
   },
+
+  bookYear: {
+    textAlign: 'center',
+    fontWeight: "bold",
+    fontSize: 14,
+    minHeight: 18,
+    paddingBottom: 5,
+  },
+  bookWrapper: {
+    flexDirection: "column", paddingHorizontal: 0,  flex: 1, marginLeft: 10
+  },
+
+  bookTitle: {
+    fontFamily: "Roboto",
+    fontWeight: "bold",
+    fontSize: 18,
+    paddingVertical: 4,
+    color: "#000",
+  },
+
+
   listItem: {
     flex:1,
+    margin: 10,
+    marginVertical: 5,
+    borderRadius: 10,
+    backgroundColor: "#FFF"
+  },
+  listItemBottom: {
+    margin: 5,
     flexDirection: "row",
-    backgroundColor: 'rgba(255,255,255,0)',
-    borderWidth: 1,
-    borderColor: '#aa3400',
-    padding: 10,
+    flexWrap: "wrap",
   }
 });

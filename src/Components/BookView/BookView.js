@@ -1,10 +1,10 @@
 import React, {useEffect, useState} from 'react';
 import {StyleSheet, Text, View, Image, ScrollView} from 'react-native';
-import {useBooks} from "../Provider/BooksProvider";
 import Authors from "./Authors";
 import Sequences from "./Sequences";
 import Comments from "./Comments";
-import {Colors} from "../Styles"
+import {Colors} from "../../Styles"
+import {commentParser, getText} from "../../service";
 const proxyImageUrl ="https://images.weserv.nl/?url=";
 const createImageUrl = (cover)=> {
   return proxyImageUrl+ "http://flibusta.is" + cover +"&h=500" ;
@@ -22,11 +22,16 @@ const Content = ({children, style})=> {
 };
 
 export default ({navigation, route})=> {
-  const {getComments} = useBooks();
   const {book} = route.params;
   const item = book.item;
   const [comments, setComments] = useState([]);
   const [recomendation, setRecomendation] = useState("");
+
+  const getComments = async ()=> {
+    const text = await getText('/b/'+book.item.bid);
+    const data = await commentParser(text);
+    return  data;
+  }
 
   const handleCommentsFetch = async()=> {
     const [_recomendation, _comments] = await getComments();
@@ -46,8 +51,8 @@ export default ({navigation, route})=> {
         <Text style={{fontWeight: "bold", paddingVertical: 10, fontSize:20}}>{item.title}</Text>
       </View>
       <View style={{marginLeft: 15}}>
-        <Sequences style={{fontSize:20}} sequencesId={item.sequencesId} sequencesTitle={item.sequencesTitle}/>
-        <Authors style={{fontSize:20}} authors = {item.author}/>
+        <Sequences style={{fontSize:20}} item={item}/>
+        <Authors style={{fontSize:20}}>{item.author}</Authors>
       </View>
       <Content style={{padding: 25, paddingTop:15, fontSize:18,  alignContent: 'space-between'}}>{item.content}</Content>
       <Comments>{comments}</Comments>

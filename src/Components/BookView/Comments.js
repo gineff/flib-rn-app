@@ -1,6 +1,6 @@
 import React from 'react';
 import {Text, View} from 'react-native';
-import {Colors} from "../Styles";
+import {Colors} from "../../Styles";
 
 export default ({children})=> {
   return (<View style={{padding: 15}}>
@@ -15,7 +15,7 @@ export default ({children})=> {
           <Text syle={{}}>{`Оценка: ${comment?.mark? comment.mark : ""}`}</Text>
         </View>
       </View>
-      <Text style={{backgroundColor:"rgba(245,78,78,0.13)"}}>{comment?.text}</Text>
+      <Text style={{backgroundColor:Colors.secondaryTint}}>{comment?.text}</Text>
 
     </View>))}
   </View>)

@@ -35,7 +35,7 @@ const SidebarMenu = (props)=> {
     />
     <Drawer.Screen
       name="Популярные за неделю"
-      initialParams={{queryType: "popularForWeek", source: "html", title: "Популярные книги за неделю"}}
+      initialParams={{queryType: "popularForWeek", source: "html", title: "Популярные за неделю"}}
       options={{
         groupName: 'Популярные книги',
         drawerLabel: 'Популярные книги за неделю',
