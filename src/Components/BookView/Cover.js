@@ -1,16 +1,16 @@
 import {StyleSheet, Image, Text, View} from "react-native";
-import React from "react";
+import React, {useRef} from "react";
 import {proxyImageUrl} from "../../Data"
 
 const createImageUrl = (cover)=> {
   return proxyImageUrl+ "http://flibusta.is" + cover +"&h=500" ;
 };
 
-const Cover = ({item})=> {
+const Cover = ({image, title})=> {
   return <View  style={styles.bookCoverWrapper}>
-    {item.image?
-      (<Image  style={styles.bookCover} source={{uri: createImageUrl(item.image) }} />) :
-      (<Text style={styles.bookCoverText}>{item.title}</Text>)
+    {image?
+      (<Image  style={styles.bookCover} source={{uri: createImageUrl(image) }} />) :
+      (<Text style={styles.bookCoverText}>{title}</Text>)
     }
   </View>
 };
@@ -33,4 +33,5 @@ const styles = StyleSheet.create({
   }
 })
 
-export default Cover;
+
+export default React.memo(Cover);

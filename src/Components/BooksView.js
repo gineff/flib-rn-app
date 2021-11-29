@@ -19,10 +19,10 @@ export default ({navigation, route})=> {
   const [filterIsVisible, setFilterIsVisible] = useState(false);
   const refPage = useRef(1);
   const refInit = useRef(true);
-
+  const start = useRef(new Date());
   const listName = `LIST-${queryType === "popularForWeek"? "W" : "24"}`
 
-  console.log("render BooksView");
+  console.log(`render ===============BooksView============== ${new Date()-start.current}`, `refresh= ${refresh}`, `books length ${books?.length}`);
 
   //** header methods
 
@@ -78,11 +78,13 @@ export default ({navigation, route})=> {
   //жанр книги в качестве фильтра
   useEffect(()=> {
     if(refInit.current) return;
+    //если значение фильтра поменялось, значит фильтры нужно скрыть
     setFilterIsVisible(false);
+    //начинается загрузка данных с новым фильтром, поэтому
     setRefresh(true);
 
     if(source === "opds"){
-      //начинаем загрузку из ods с новым свойством filter
+      //начинаем загрузку из ods библитеки с новым свойством filter
       getData(true);
     }else{
       //загружаем из хранилища список популярных, фильтруем его с новомым фильтром
@@ -107,7 +109,9 @@ export default ({navigation, route})=> {
   }
 
   const handleLoadMore = () => {
+    //в браузере неверно работает onEndReached
     if(Platform.OS === "web") return;
+    //refresh = true - уже идет загрузка. если books.length < 20 достигнут конец (последняя страница)
     if (!refresh && books.length && books.length% 20 === 0) {
       getNextPage();
       setRefresh(true);
@@ -163,7 +167,6 @@ export default ({navigation, route})=> {
     }
   };
 
-
   const deferredLoadFromServer = async ()=> {
     const point0 = new Date();
     let list, newBooksID;
@@ -175,9 +178,7 @@ export default ({navigation, route})=> {
       console.log("загрузка с сервера", newBooksID.slice(0,3)+"...", new Date()-point0);
     }catch(e){
       //получаем данные с сайта
-      const url = generateUrl();
-      const text = await getText(url);
-      list = await htmlParser(text);
+      list = await getDataFromOPDS()
       newBooksID = list.map(el=>el.bid);
       console.log("newBooksID", newBooksID)
     }
@@ -233,17 +234,17 @@ export default ({navigation, route})=> {
     await AsyncStorage.setItem(listName, JSON.stringify(list))
 
     setBooks(list);
-
   }
 
-
   const getDataFromStorage = async ()=> {
-
     const listOfBooksStr = await AsyncStorage.getItem(listName) ;
     return  listOfBooksStr === null ? [] : JSON.parse(listOfBooksStr);
   }
 
   const getData = async (resetBooks= false)=> {
+    //два типа источника данных: библиотека opds flibusta (opds) и список популярных книг с сайта (html) /stat/w и
+    // /stat/24. Списки сначала загружаются из Локального Хранилища , затем в фоне данные загружаются с сервера, либо
+    //если сервер не доступен, с сайта Флибусты загружаются списки и затем ищутся книги в opds бибилиотеке
     const data = source ===  "opds"? await getDataFromOPDS() : await getDataFromStorage();
     const _books = resetBooks? [] : books;
     setBooks([..._books, ...data]);
@@ -257,10 +258,8 @@ export default ({navigation, route})=> {
   },[])
 
   useEffect(()=>{
-    console.log("books updated");
-    console.log("set refresh false");
+    //console.log(`books updated ${new Date()-start.current}`, books);
 
-    /*TODO refresh false on book loading*/
     if(refInit.current){
       refInit.current = false;
     }else if(refresh){
@@ -280,7 +279,7 @@ export default ({navigation, route})=> {
       onEndReachedThreshold={0.1}
       keyExtractor={(item, index) => "key"+index}
       renderItem={({item, index}) => {
-        return (<BookItem book={{item, index}} navigation={navigation} onGenreClick={onGenreClick}/>);
+        return (<BookItem item={item} index={index} navigation={navigation} onGenreClick={onGenreClick}/>);
       }}
     />)}
   </View>

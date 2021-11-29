@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, {useRef} from 'react';
 import {StyleSheet, Text} from "react-native";
 import { NavigationContext } from '@react-navigation/native';
 
@@ -10,6 +10,11 @@ const Authors = ({children}) => {
 };
 
 const Author = ({children, navigation})=> {
+
+  //const a = useRef(children);
+  //if(children.id == 143831)
+  //console.log("Author------------------")
+
 
   const onPress = ()=> {
     navigation.push("BooksList",{query: children.id, queryType: "author", source: "opds"})
@@ -31,4 +36,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default Authors;
+export default React.memo(Authors);

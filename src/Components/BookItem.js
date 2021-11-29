@@ -3,32 +3,34 @@ import {StyleSheet, Text, View, Image, TouchableOpacity} from 'react-native';
 import {Authors, Sequences, Cover, Content, Genres} from "./BookView"
 import {Colors} from "../Styles"
 
-export default ({book, navigation, onGenreClick})=> {
-  const {item, index} = book;
+const BookItem =  ({item, index, navigation, onGenreClick})=> {
 
+  if(index === 0) console.log("BookItem render");
   const navigateBook = ()=> {
-    navigation.navigate("Book",{book})
+    navigation.navigate("Book",{item})
   }
+
+  const {sequencesTitle, sequencesId, author, content, title, image, genre, year} = item;
 
   return (
       <View style={styles.listItem} >
         <TouchableOpacity  onPress = {navigateBook} style={{flexDirection: "row"}}>
           <View>
             <View style={styles.bookCoverNDateWrapper}>
-                <Cover item={item}/>
-                <Text style={styles.bookYear}>{item?.year}</Text>
+                <Cover image={image} title={title}/>
+                <Text style={styles.bookYear}>{year}</Text>
             </View>
           </View>
           <View style={styles.bookWrapper}>
             {/*title*/}
-            <Text style={styles.bookTitle}>{(index+1)+". "+item.title}</Text>
-            <Authors>{item.author}</Authors>
-            <Sequences item={item}/>
-            <Content>{item.content}</Content>
+            <Text style={styles.bookTitle}>{(index+1)+". "+title}</Text>
+            <Authors>{author}</Authors>
+            <Sequences sequencesTitle={sequencesTitle} sequencesId={sequencesId}/>
+            <Content>{content}</Content>
           </View>
         </TouchableOpacity>
         <View style={styles.listItemBottom}>
-          <Genres onGenreClick={onGenreClick}>{item.genre}</Genres>
+          <Genres onGenreClick={onGenreClick}>{genre}</Genres>
         </View>
       </View>
   )
@@ -77,3 +79,5 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   }
 });
+
+export default React.memo(BookItem)

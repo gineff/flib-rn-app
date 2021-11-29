@@ -70,4 +70,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default Genres;
+export default React.memo(Genres);

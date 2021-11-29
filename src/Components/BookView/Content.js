@@ -21,4 +21,4 @@ const styles = StyleSheet.create({
   }
 })
 
-export default Content;
+export default React.memo(Content);

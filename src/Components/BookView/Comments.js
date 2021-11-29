@@ -2,7 +2,7 @@ import React from 'react';
 import {Text, View} from 'react-native';
 import {Colors} from "../../Styles";
 
-export default ({children})=> {
+const Comments = ({children})=> {
   return (<View style={{padding: 15}}>
     {children.map((comment, i) => (<View style={{paddingBottom: 15}} key={i}>
       {/* header */}
@@ -20,3 +20,5 @@ export default ({children})=> {
     </View>))}
   </View>)
 }
+
+export default React.memo(Comments)

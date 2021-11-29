@@ -1,10 +1,12 @@
-import * as React from "react";
+import React, {useRef} from 'react';
 import {StyleSheet, Text, View} from "react-native";
 import { NavigationContext } from '@react-navigation/native';
 
-const Sequences = ({item}) => {
+const Sequences = ( {sequencesTitle, sequencesId}) => {
+  //const _item = useRef(item);
+  console.log("Sequences =========")
   const navigation = React.useContext(NavigationContext);
-  const {sequencesTitle, sequencesId} = item;
+  //const {sequencesTitle, sequencesId} = item;
   return (<>
     {sequencesTitle.map( (el, i)=> (
       <Sequence key={i} navigation={navigation} sequencesId={sequencesId[i]}>{el}</Sequence>))}
@@ -26,4 +28,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default Sequences;
+export default React.memo(Sequences);
