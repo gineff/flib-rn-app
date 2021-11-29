@@ -11,11 +11,6 @@ const Authors = ({children}) => {
 
 const Author = ({children, navigation})=> {
 
-  //const a = useRef(children);
-  //if(children.id == 143831)
-  //console.log("Author------------------")
-
-
   const onPress = ()=> {
     navigation.push("BooksList",{query: children.id, queryType: "author", source: "opds"})
   }

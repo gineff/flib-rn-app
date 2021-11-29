@@ -1,12 +1,9 @@
-import React, {useRef} from 'react';
+import React from 'react';
 import {StyleSheet, Text, View} from "react-native";
 import { NavigationContext } from '@react-navigation/native';
 
 const Sequences = ( {sequencesTitle, sequencesId}) => {
-  //const _item = useRef(item);
-  console.log("Sequences =========")
   const navigation = React.useContext(NavigationContext);
-  //const {sequencesTitle, sequencesId} = item;
   return (<>
     {sequencesTitle.map( (el, i)=> (
       <Sequence key={i} navigation={navigation} sequencesId={sequencesId[i]}>{el}</Sequence>))}

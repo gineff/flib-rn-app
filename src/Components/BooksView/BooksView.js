@@ -3,9 +3,9 @@ import {FlatList, Text, TouchableOpacity, View, Platform, StyleSheet} from "reac
 import BookItem from "./BookItem";
 import FilterView from "./FilterView";
 import Icon from "react-native-vector-icons/Ionicons";
-import {Colors} from "../Styles";
-import {xmlParser, htmlParser, getText, cutString} from "../service";
-import {serverUrl} from "../Data";
+import {Colors} from "../../Styles";
+import {xmlParser, htmlParser, getText, cutString} from "../../service";
+import {serverUrl} from "../../Data";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default ({navigation, route})=> {
@@ -154,6 +154,12 @@ export default ({navigation, route})=> {
     return xmlParser(text);
   }
 
+  const getDataFromSite = async ()=> {
+    let url = generateUrl();
+    const text = await getText(url);
+    return htmlParser(text);
+  }
+
   const searchBookByAuthor = async (book, searchPage = 1)=> {
     console.log("search in opds by author", searchPage, book.title);
     if(!book.author[0].id) return undefined;
@@ -178,7 +184,7 @@ export default ({navigation, route})=> {
       console.log("загрузка с сервера", newBooksID.slice(0,3)+"...", new Date()-point0);
     }catch(e){
       //получаем данные с сайта
-      list = await getDataFromOPDS()
+      list = await getDataFromSite();
       newBooksID = list.map(el=>el.bid);
       console.log("newBooksID", newBooksID)
     }

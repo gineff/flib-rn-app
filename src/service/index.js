@@ -1,9 +1,8 @@
-import {proxyCorsUrl} from "../Data";
+import {proxyCorsUrl, cacheMaxAge} from "../Data";
 import {xmlParser, htmlParser, commentParser} from "./flibustaParser"
 
 const getText = async (url)=> {
-  return fetch(proxyCorsUrl+encodeURIComponent('http://flibusta.is'+url))
-    .then(response=>response.text())
+  return fetch(proxyCorsUrl+encodeURIComponent('http://flibusta.is'+url), {cache: "no-store"}) .then(response=>response.text())
 };
 
 const cutString = (str, length = 35)=> {

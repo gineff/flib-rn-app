@@ -1,7 +1,7 @@
 import React, {useEffect, useState, useCallback} from 'react';
 import {StyleSheet, Text, View, Image, TouchableOpacity} from 'react-native';
-import {Authors, Sequences, Cover, Content, Genres} from "./BookView"
-import {Colors} from "../Styles"
+import {Authors, Sequences, Cover, Content, Genres} from "../BookView"
+import {Colors} from "../../Styles"
 
 const BookItem =  ({item, index, navigation, onGenreClick})=> {
 

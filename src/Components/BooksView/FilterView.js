@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import {FlatList, Text, TouchableOpacity, View} from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
-import {Colors} from "../Styles";
-import {getText, xmlParser} from "../service";
+import {Colors} from "../../Styles";
+import {getText, xmlParser} from "../../service";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const GenreItem = ({genre, setFilter})=> {
