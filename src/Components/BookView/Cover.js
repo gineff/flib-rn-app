@@ -6,8 +6,8 @@ const createImageUrl = (cover)=> {
   return proxyImageUrl+ "http://flibusta.is" + cover +"&h=500" ;
 };
 
-const Cover = ({image, title})=> {
-  return <View  style={styles.bookCoverWrapper}>
+const Cover = ({image, title, style})=> {
+  return <View  style={[styles.bookCoverWrapper, style]}>
     {image?
       (<Image  style={styles.bookCover} source={{uri: createImageUrl(image) }} />) :
       (<Text style={styles.bookCoverText}>{title}</Text>)
@@ -18,15 +18,12 @@ const Cover = ({image, title})=> {
 const styles = StyleSheet.create({
   bookCoverWrapper: {
     padding: 5,
-    height: 167,
-    width: 110,
-    justifyContent: "center",
-    alignContent: "center",
-
+    width: "100%",
+    minHeight: 167
   },
   bookCover: {
-    height: 157,
-    width: 100,
+    aspectRatio: 100/157,
+    width: "100%",
   },
   bookCoverText: {
     textAlign: 'center'

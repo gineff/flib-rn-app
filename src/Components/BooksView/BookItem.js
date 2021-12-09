@@ -1,7 +1,8 @@
 import React, {useEffect, useState, useCallback} from 'react';
 import {StyleSheet, Text, View, Image, TouchableOpacity} from 'react-native';
-import {Authors, Sequences, Cover, Content, Genres} from "../BookView"
+import {Authors, Sequences, Cover, Content, Genres, StarsRating} from "../BookView"
 import {Colors} from "../../Styles"
+import Icon from "react-native-vector-icons/Ionicons";
 
 const BookItem =  ({item, index, navigation, onGenreClick})=> {
 
@@ -15,18 +16,23 @@ const BookItem =  ({item, index, navigation, onGenreClick})=> {
   return (
       <View style={styles.listItem} >
         <TouchableOpacity  onPress = {navigateBook} style={{flexDirection: "row"}}>
-          <View>
+          <View style={styles.bookLeftSide}>
             <View style={styles.bookCoverNDateWrapper}>
-                <Cover image={image} title={title}/>
-                <Text style={styles.bookYear}>{year}</Text>
+              <Cover image={image} title={title}/>
+              <TouchableOpacity  onPress={()=>{alert("rating")}}
+                                 style={styles.bookStarRating}>
+                <StarsRating marks={[10,4.2]} size={16}/>
+                <Icon name="information-outline" size={18}/>
+              </TouchableOpacity>
             </View>
+            {/*<Text style={styles.bookYear}>{year}</Text>*/}
           </View>
           <View style={styles.bookWrapper}>
             {/*title*/}
             <Text style={styles.bookTitle}>{(index+1)+". "+title}</Text>
             <Authors>{author}</Authors>
             <Sequences sequencesTitle={sequencesTitle} sequencesId={sequencesId}/>
-            <Content>{content}</Content>
+            <Content numberOfLines={10}>{content}</Content>
           </View>
         </TouchableOpacity>
         <View style={styles.listItemBottom}>
@@ -38,14 +44,14 @@ const BookItem =  ({item, index, navigation, onGenreClick})=> {
 
 
 const styles = StyleSheet.create({
-
+  bookLeftSide: {flex:1,},
   bookCoverNDateWrapper: {
     marginLeft:5,
     marginTop:5,
     borderRadius: 5,
     backgroundColor: Colors.secondary
   },
-
+  bookStarRating: {flexDirection:"row",justifyContent: "center", alignItems:"flex-end", padding: 5},
   bookYear: {
     textAlign: 'center',
     fontWeight: "bold",
@@ -54,7 +60,7 @@ const styles = StyleSheet.create({
     paddingBottom: 5,
   },
   bookWrapper: {
-    flexDirection: "column", paddingHorizontal: 0,  flex: 1, marginLeft: 10
+    flexDirection: "column", paddingHorizontal: 0,  flex: 2, marginLeft: 10
   },
 
   bookTitle: {

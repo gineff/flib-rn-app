@@ -14,6 +14,7 @@ export default ({navigation, route})=> {
 
   const [books, setBooks] = useState([]);
   const [refresh, setRefresh] = useState(true);
+  const [errors, setErrors] = useState([]);
   const flatListRef = useRef(null);
   const [filter, setFilter] = useState(null);
   const [filterIsVisible, setFilterIsVisible] = useState(false);
@@ -149,9 +150,16 @@ export default ({navigation, route})=> {
   };
 
   const getDataFromOPDS = async ()=> {
-    let url = generateUrl();
-    const text = await getText(url);
-    return xmlParser(text);
+    try{
+      let url = generateUrl();
+      const text = await getText(url);
+      return xmlParser(text);
+    }catch (e) {
+      setErrors([...errors, new Error("Возникли трудности с загрузкой книг из библиотеки Флибуста.\r\n" +
+        "Попробуйте посмотреть списки популярных книг за неделю или день")])
+      return [];
+    }
+
   }
 
   const getDataFromSite = async ()=> {
@@ -261,6 +269,8 @@ export default ({navigation, route})=> {
 
   useEffect(()=> {
     getData();
+
+
   },[])
 
   useEffect(()=>{
@@ -274,7 +284,7 @@ export default ({navigation, route})=> {
   },[books])
 
   return   <View style={{backgroundColor: Colors.secondaryTint}}>
-
+    {!!errors.length && (<Text>{errors.map(el=> `${el.message}\r\n`)}</Text>)}
     {filterIsVisible? (<FilterView filter={filter} setFilter= {setFilter} queryType={queryType} source={source}/>) :
       (<FlatList
       ref={flatListRef}

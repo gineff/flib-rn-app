@@ -1,7 +1,7 @@
 import {StyleSheet, Text} from "react-native";
 import React from "react";
 
-const Content = ({children})=> {
+const Content = ({children, style, numberOfLines})=> {
   const content = children;
 
   if(!content) return <></>;
@@ -12,12 +12,13 @@ const Content = ({children})=> {
     .replace(/\n/g,"")
     .replace(/(<\/p>)|(<br>)|(<b>)|(<\/b>)|(<i>)|(<\/i>)/g,"");
 
-  return <Text style={styles.bookContent}  numberOfLines={10}  >{_content}</Text>
+  return <Text style={style? {...style, ...styles.bookContent} : styles.bookContent}  numberOfLines={numberOfLines}  >{_content}</Text>
 };
 
 const styles = StyleSheet.create({
   bookContent: {
-    marginTop: 5
+    marginTop: 5,
+    textAlign:'justify'
   }
 })
 

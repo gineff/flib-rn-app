@@ -1,12 +1,18 @@
-import {proxyCorsUrl, cacheMaxAge} from "../Data";
-import {xmlParser, htmlParser, commentParser} from "./flibustaParser"
+import {proxyCorsUrl, reserveProxyCorsUrl, serverUrl} from "../Data";
+import {xmlParser, htmlParser, commentParser, fb2Parser} from "./flibustaParser"
 
 const getText = async (url)=> {
-  return fetch(proxyCorsUrl+encodeURIComponent('http://flibusta.is'+url), {cache: "no-store"}) .then(response=>response.text())
+  console.log('get text')
+    const response =  fetch(proxyCorsUrl+encodeURIComponent('http://flibusta.is'+url), {cache: "no-store"})
+    if(response.status === 200) return await response.text();
+    const res = fetch(reserveProxyCorsUrl+encodeURIComponent('http://flibusta.is'+url), {cache: "no-store"})
+    return await res.text();
+      //.then(response=>response.text())
+//    return fetch(reserveProxyCorsUrl+encodeURIComponent('http://flibusta.is'+url), {cache: "no-store"}) .then(response=>response.text())
 };
 
 const cutString = (str, length = 35)=> {
   return (str && str.length>length)? str.slice(0,length)+"..." : str;
 }
 
-export {getText, cutString, xmlParser, htmlParser, commentParser}
+export {getText, cutString, xmlParser, htmlParser, commentParser, fb2Parser}

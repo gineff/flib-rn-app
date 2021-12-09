@@ -1,4 +1,4 @@
-import BooksView from "./BooksView";
+import BooksView from "./BooksView.js";
 import BookItem from "./BookItem";
 import FilterView from "./FilterView";
 
