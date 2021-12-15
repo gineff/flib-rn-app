@@ -1,11 +1,11 @@
-import React, {useEffect, useState,useRef, useCallback} from 'react'
+import React, {useEffect, useState, useRef, useCallback} from 'react'
 import {FlatList, Text, TouchableOpacity, View, Platform, StyleSheet} from "react-native";
 import BookItem from "./BookItem";
 import FilterView from "./FilterView";
 import Icon from "react-native-vector-icons/Ionicons";
 import {Colors} from "../../Styles";
 import {xmlParser, htmlParser, getText, cutString} from "../../service";
-import {serverUrl} from "../../Data";
+import {serverUrl, Collection} from "../../Data";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default ({navigation, route})=> {
@@ -22,6 +22,7 @@ export default ({navigation, route})=> {
   const refInit = useRef(true);
   const start = useRef(new Date());
   const listName = `LIST-${queryType === "popularForWeek"? "W" : "24"}`
+  const collection = useRef();
 
   console.log(`render ===============BooksView============== ${new Date()-start.current}`, `refresh= ${refresh}`, `books length ${books?.length}`);
 
@@ -259,15 +260,28 @@ export default ({navigation, route})=> {
     //два типа источника данных: библиотека opds flibusta (opds) и список популярных книг с сайта (html) /stat/w и
     // /stat/24. Списки сначала загружаются из Локального Хранилища , затем в фоне данные загружаются с сервера, либо
     //если сервер не доступен, с сайта Флибусты загружаются списки и затем ищутся книги в opds бибилиотеке
-    const data = source ===  "opds"? await getDataFromOPDS() : await getDataFromStorage();
+    /*const data = source ===  "opds"? await getDataFromOPDS() : await getDataFromStorage();
     const _books = resetBooks? [] : books;
     setBooks([..._books, ...data]);
-    if( source !==  "opds") deferredLoadFromServer();
+    if( source !==  "opds") deferredLoadFromServer();*/
+    const data = source ===  "opds"? await collection.current.getPage(1) :
+      await collection.current.storage.get(`list-${queryType === "popularForWeek"? "w" : "24"}`);
+    console.log(data);
+    const _books = resetBooks? [] : books;
+
+    setBooks([..._books, ...data]);
+    if( source !==  "opds") {
+      const _data = await collection.current.list(queryType === "popularForWeek"? "w" : "24", {savedList:data})  ;
+      setBooks(_data);
+
+    }
+
   }
 
   /*END get data methods  */
 
   useEffect(()=> {
+    collection.current = new Collection({source, queryType, id:query});
     getData();
 
 

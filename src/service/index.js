@@ -2,13 +2,10 @@ import {proxyCorsUrl, reserveProxyCorsUrl, serverUrl} from "../Data";
 import {xmlParser, htmlParser, commentParser, fb2Parser} from "./flibustaParser"
 
 const getText = async (url)=> {
-  console.log('get text')
-    const response =  fetch(proxyCorsUrl+encodeURIComponent('http://flibusta.is'+url), {cache: "no-store"})
+    const response =  await fetch(proxyCorsUrl+encodeURIComponent('http://flibusta.is'+url), {cache: "no-store"})
     if(response.status === 200) return await response.text();
-    const res = fetch(reserveProxyCorsUrl+encodeURIComponent('http://flibusta.is'+url), {cache: "no-store"})
+    const res = await fetch(reserveProxyCorsUrl+encodeURIComponent('http://flibusta.is'+url), {cache: "no-store"})
     return await res.text();
-      //.then(response=>response.text())
-//    return fetch(reserveProxyCorsUrl+encodeURIComponent('http://flibusta.is'+url), {cache: "no-store"}) .then(response=>response.text())
 };
 
 const cutString = (str, length = 35)=> {

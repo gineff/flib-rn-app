@@ -24,6 +24,7 @@ const styles = StyleSheet.create({
   bookCover: {
     aspectRatio: 100/157,
     width: "100%",
+    minHeight: 167
   },
   bookCoverText: {
     textAlign: 'center'
