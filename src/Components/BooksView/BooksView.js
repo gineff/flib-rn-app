@@ -1,5 +1,5 @@
 import React, {useEffect, useState, useRef, useCallback} from 'react'
-import {FlatList, Text, TouchableOpacity, View, Platform, StyleSheet} from "react-native";
+import {FlatList, Text, TouchableOpacity, View, Platform, StyleSheet, Dimensions} from "react-native";
 import BookItem from "./BookItem";
 import FilterView from "./FilterView";
 import Icon from "react-native-vector-icons/Ionicons";
@@ -11,7 +11,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 export default ({navigation, route})=> {
 
   const {title, source, queryType, query} = route.params;
-
+  const [serverlessMode, setServerLessMode] = useState(false);
   const [books, setBooks] = useState([]);
   const [refresh, setRefresh] = useState(true);
   const [errors, setErrors] = useState([]);
@@ -21,8 +21,8 @@ export default ({navigation, route})=> {
   const refPage = useRef(1);
   const refInit = useRef(true);
   const start = useRef(new Date());
-  const listName = `LIST-${queryType === "popularForWeek"? "W" : "24"}`
   const collection = useRef();
+  const { width, height } = Dimensions.get('window');
 
   console.log(`render ===============BooksView============== ${new Date()-start.current}`, `refresh= ${refresh}`, `books length ${books?.length}`);
 
@@ -35,16 +35,33 @@ export default ({navigation, route})=> {
   const setTitle = ()=> {
     const header = {};
 
-
     if(queryType === "author"){
       header.title = books[0]?.author[0].name;
     }else if( queryType === "sequence"){
       header.title =  books[0]?.sequencesTitle[0];
+    }else if( queryType === "searchByTitle"){
+      //console.log("title", createTwoLevelTitle("Поиск по названию", query))
+      header.headerTitle = () => (createTwoLevelTitle("Поиск по названию", query))
+        //createTwoLevelTitle("Поиск по названию", "название");
+      //header.title = createTwoLevelTitle("Поиск по названию", query)
     }else{
-      header.title = filterTitle
+      if(filterIsVisible){
+        header.title = "Фильтр по жанрам";
+      }else if(!filter){
+        header.title = title;
+      }else{
+        header.headerTitle = () => createTwoLevelTitle(title, filter?.title);
+      }
     }
 
     navigation.setOptions(header);
+  }
+
+  const createTwoLevelTitle = (first, second)=> {
+    return (<View>
+      <Text style={{color: "#FFF", fontSize: 18}}>{cutString(first)}</Text>
+      <Text style={{color: "#FFF",  fontSize: 10}}>{cutString(second)}</Text>
+    </View>)
   }
 
   //** filter methods
@@ -59,7 +76,9 @@ export default ({navigation, route})=> {
   const filterIcon = <TouchableOpacity
     style={{...styles.filterIcon, backgroundColor: filterIsVisible? Colors.secondary : Colors.prime}}
     onPress={()=>{setFilterIsVisible(!filterIsVisible)}}>
-    <Icon size={25} color="#FFF" name="filter"/>
+    {/*<Icon size={25} color="#FFF" name="filter"/>*/}
+    {(Platform.OS === "web")? (<Text style={{fontSize:30}}>...</Text>) :
+      (<Icon size={25} color="#FFF" name="ellipsis-vertical-sharp"/>)}
   </TouchableOpacity>
 
   const setHeaderRight = ()=> {
@@ -87,10 +106,14 @@ export default ({navigation, route})=> {
 
     if(source === "opds"){
       //начинаем загрузку из ods библитеки с новым свойством filter
+      if(filter) collection.current.setOptions({queryType:"genre", queryId: filter.id, page: 1})
+      else collection.current.setOptions({queryType, queryId: query, page: 1})
+      console.log("get data - filter");
       getData(true);
     }else{
       //загружаем из хранилища список популярных, фильтруем его с новомым фильтром
-      getDataFromStorage().then((_books)=> {
+
+      collection.current.storage.get(queryType).then((_books)=> {
         if(filter) {
           _books = _books.filter((el)=> {
             let match=false;
@@ -107,6 +130,9 @@ export default ({navigation, route})=> {
 
   const getNextPage = (nextPage)=> {
     refPage.current = nextPage || refPage.current+1;
+    collection.current.setOptions({page: (collection.current.page+1)})
+    console.log("get data - next page");
+
     getData()
   }
 
@@ -126,162 +152,70 @@ export default ({navigation, route})=> {
 
   //** get data methods
 
-  const generateUrl = () => {
-    const page = refPage.current;
-    let url;
-
-    if(queryType === "author"){
-      url = "/opds/author/" + query + "/time"+"/"+(page-1);
-    }else if(queryType === "sequence"){
-      url =  "/opds/sequencebooks/"+query+"/"+(page-1);
-    }else if(queryType === "genre") {
-      url =  "/opds/new/" + (page-1)  + "/newgenres/" + query;
-    }else if(queryType === "search") {
-      url = '/opds/opensearch?searchType=books&searchTerm=' + query;
-      return url;
-    }else if(queryType === "popularForDay" || queryType === "popularForWeek"){
-      url =  `/stat/${queryType === "popularForWeek"? "w" : "24"}`;
-    }else if(queryType === "newForWeek" && filter){
-      url =  "/opds/new/" + (page-1)  + "/newgenres/" + filter.id;
-    }else if(queryType === "newForWeek"){
-      url =  "/opds/new/" + (page - 1) + "/new/" ;
-    }
-    console.log('\x1b[36m%s\x1b[0m', "url", url);
-    return url;
-  };
-
-  const getDataFromOPDS = async ()=> {
-    try{
-      let url = generateUrl();
-      const text = await getText(url);
-      return xmlParser(text);
-    }catch (e) {
-      setErrors([...errors, new Error("Возникли трудности с загрузкой книг из библиотеки Флибуста.\r\n" +
-        "Попробуйте посмотреть списки популярных книг за неделю или день")])
-      return [];
-    }
-
+  const getOPDSData = async ()=> {
+    return await collection.current.getPage();
   }
 
-  const getDataFromSite = async ()=> {
-    let url = generateUrl();
-    const text = await getText(url);
-    return htmlParser(text);
+  const getListDataFromSite = async ()=> {
+    setServerLessMode(true);
+    return await collection.current.getListFromSite(queryType);
   }
 
-  const searchBookByAuthor = async (book, searchPage = 1)=> {
-    console.log("search in opds by author", searchPage, book.title);
-    if(!book.author[0].id) return undefined;
-    const text = await getText("/opds/author/" + book.author[0].id + "/time"+"/"+(searchPage-1));
-    const data = xmlParser(text);
-    const filteredData = data.filter(el => el.bid === book.bid)[0];
-    if(data.length === 20 && filteredData === undefined){
-      return await searchBookByAuthor(book, ++searchPage);
-    }else{
-      return filteredData;
-    }
-  };
-
-  const deferredLoadFromServer = async ()=> {
-    const point0 = new Date();
-    let list, newBooksID;
-
-    try{
-      //получаем список id с сервера
-      newBooksID = await fetch(`${serverUrl}/list/${queryType === "popularForWeek"? "w" : "24"}`)
-          .then(res=>res.json());
-      console.log("загрузка с сервера", newBooksID.slice(0,3)+"...", new Date()-point0);
-    }catch(e){
-      //получаем данные с сайта
-      list = await getDataFromSite();
-      newBooksID = list.map(el=>el.bid);
-      console.log("newBooksID", newBooksID)
-    }
-
-    //получаем спиок из локального хранилища
-    let listOfBooks = await getDataFromStorage();
-
-    /*const listName = `LIST-${queryType === "popularForWeek"? "W" : "24"}`;
-    const listOfBooksStr = await AsyncStorage.getItem(listName) ;
-    const listOfBooks =   listOfBooksStr === null ? [] : JSON.parse(listOfBooksStr);*/
-
-    listOfBooks = listOfBooks.reduce((arr,el)=>{if(el){arr.push(el)} return arr}, [])
-
-    //получаем список id из списка из локального хранилища
-    const listOfBooksId = listOfBooks.map(el=>el.bid);
-    console.log("загрузка из хранилища", new Date()-point0);
-
-    //сравнение и подготовка списка id недостающих книг
-    const ListOfMissingBooksId = newBooksID.filter(id=> !listOfBooksId.includes(id));
-    console.log("подготовка списка к запросу", ListOfMissingBooksId, new Date()-point0);
-
-    // запрос недостающих книг с сервера
-    //if(ListOfMissingBooksId.length>0){
-    let newBooks = [];
-    try{
-      newBooks = await fetch(serverUrl, {
-        method: 'POST',
-        headers: {"Content-Type": "application/json"},
-        body:  JSON.stringify(ListOfMissingBooksId)
-      }).then(res=> res.json());
-      console.log("запрос на сервер", new Date()-point0);
-
-    }catch(e){
-      for(let id of ListOfMissingBooksId){
-        const book = list.filter(el=>el.bid === id)[0];
-        const foundBook = await searchBookByAuthor(book);
-        if(foundBook) newBooks.push(foundBook);
-      }
-    }
-
-    //объединяем списки используя Map
-    const map = new Map();
-    listOfBooks.forEach(el=> map.set(el.bid, el))
-    newBooks.forEach(el=> map.set(el.bid, el))
-
-    //создаем список книг
-    //на флибусте бывает так, что в популярных списках у книги один id, а в книгах у автора другой.
-    //это происходит из-за того, что книгу обновили, а в списках осталась прежняя версия
-    list = newBooksID.reduce((arr, id)=> {if(map.has(id)) {arr.push( map.get(id))} return arr},[])
-    console.log("обработка результатов", new Date()-point0);
-
-    //сохранение списка в локальном хранилище
-    await AsyncStorage.setItem(listName, JSON.stringify(list))
-
-    setBooks(list);
+  const getListDataFromServer  = async ()=> {
+    return await collection.current.getList(queryType);
   }
 
-  const getDataFromStorage = async ()=> {
-    const listOfBooksStr = await AsyncStorage.getItem(listName) ;
-    return  listOfBooksStr === null ? [] : JSON.parse(listOfBooksStr);
+  const getListData = async ()=> {
+    return await  getListDataFromServer() ||  await getListDataFromSite()
+  }
+
+  const getFromStorage = async ()=> {
+    return  await collection.current.storage.get(queryType) ;
+  }
+
+  const isQueryTypeToSave = ()=> {
+    return queryType === "newForWeek" || queryType === "popularForWeek" || queryType === "popularForDay" || queryType === "searchByTitle"
   }
 
   const getData = async (resetBooks= false)=> {
     //два типа источника данных: библиотека opds flibusta (opds) и список популярных книг с сайта (html) /stat/w и
     // /stat/24. Списки сначала загружаются из Локального Хранилища , затем в фоне данные загружаются с сервера, либо
     //если сервер не доступен, с сайта Флибусты загружаются списки и затем ищутся книги в opds бибилиотеке
-    /*const data = source ===  "opds"? await getDataFromOPDS() : await getDataFromStorage();
-    const _books = resetBooks? [] : books;
-    setBooks([..._books, ...data]);
-    if( source !==  "opds") deferredLoadFromServer();*/
-    const data = source ===  "opds"? await collection.current.getPage(1) :
-      await collection.current.storage.get(`list-${queryType === "popularForWeek"? "w" : "24"}`);
-    console.log(data);
-    const _books = resetBooks? [] : books;
-
-    setBooks([..._books, ...data]);
-    if( source !==  "opds") {
-      const _data = await collection.current.list(queryType === "popularForWeek"? "w" : "24", {savedList:data})  ;
-      setBooks(_data);
-
+    //console.log("get data")
+    //console.log("navigation", navigation)
+    //console.log("route", route)
+    let data;
+    //если первый запуск и ...
+    if(refInit.current && isQueryTypeToSave()){
+      data = await getFromStorage();
+    }else{
+      data = (source ===  "opds")?
+        await getOPDSData() :
+        await getListData() ;
     }
+    const _books = resetBooks? [] : books;
+    setBooks([..._books, ...data]);
+
+    //if _books[0].simple
+    //
+    //первоначально данные загружаются из локального хранилища. Далее инициализируем загрузку с сервера
+    if(refInit.current && isQueryTypeToSave()){
+      refInit.current = false;
+      getData()
+    }else if(isQueryTypeToSave()){
+      await collection.current.storage.set(queryType, data)
+    }
+    console.log("end")
+
 
   }
 
   /*END get data methods  */
 
   useEffect(()=> {
-    collection.current = new Collection({source, queryType, id:query});
+    collection.current = new Collection({source, queryType, queryId: query});
+    console.log("get data - init");
+
     getData();
 
 
@@ -290,17 +224,16 @@ export default ({navigation, route})=> {
   useEffect(()=>{
     //console.log(`books updated ${new Date()-start.current}`, books);
 
-    if(refInit.current){
-      refInit.current = false;
-    }else if(refresh){
+    if(!refInit.current){
       setRefresh(false);
     }
   },[books])
 
-  return   <View style={{backgroundColor: Colors.secondaryTint}}>
+  return <View style={styles.container}><View style={{backgroundColor: Colors.secondaryTint, width: (Platform.OS === "web"? 1000 : "100%")}}>
     {!!errors.length && (<Text>{errors.map(el=> `${el.message}\r\n`)}</Text>)}
-    {filterIsVisible? (<FilterView filter={filter} setFilter= {setFilter} queryType={queryType} source={source}/>) :
+    {filterIsVisible? (<FilterView filter={filter} setFilter= {setFilter} collection={collection.current} queryType={queryType} source={source}/>) :
       (<FlatList
+      numColumns = {Platform.OS === "web"? 2 : 1}
       ref={flatListRef}
       onRefresh={onRefresh}
       refreshing={refresh}
@@ -312,9 +245,13 @@ export default ({navigation, route})=> {
         return (<BookItem item={item} index={index} navigation={navigation} onGenreClick={onGenreClick}/>);
       }}
     />)}
-  </View>
+  </View></View>
 }
+
 const styles = StyleSheet.create({
+  container: {
+    alignItems : "center"
+  },
   filterIcon: {
     color:"#FFF", marginRight: 10, padding: 5, paddingHorizontal: 10, borderRadius: 5,
   }

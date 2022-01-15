@@ -3,6 +3,7 @@ import {Colors} from "../Styles";
 const Drawer = createDrawerNavigator();
 import CustomSidebarMenu from "../../CustomSidebarMenu";
 import BooksView from "./BooksView";
+import SearchView from "./SearchView";
 import {createDrawerNavigator} from "@react-navigation/drawer";
 
 
@@ -20,7 +21,7 @@ const SidebarMenu = (props)=> {
       headerTintColor: '#fff',
       headerTitleAlign: 'center'
     }}
-    initialRouteName = "Новинки за неделю"
+    initialRouteName = "Поиск"
     drawerContent={(props) => <CustomSidebarMenu {...props} />}>
 
     <Drawer.Screen
@@ -52,6 +53,15 @@ const SidebarMenu = (props)=> {
         activeTintColor: Colors.prime,
       }}
       component={BooksView}
+    />
+    <Drawer.Screen
+      name="Поиск"
+      options={{
+        groupName: 'Поиск',
+        drawerLabel: 'Поиск книги',
+        activeTintColor: Colors.prime,
+      }}
+      component={SearchView}
     />
   </Drawer.Navigator>
 };

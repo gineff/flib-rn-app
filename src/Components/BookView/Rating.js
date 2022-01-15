@@ -8,7 +8,8 @@ const Rating = ({marks})=> {
   const [people = 0, mark = 0] = marks;
   let stars = [];
   for(let i=0; i<5; i++) {
-    stars.push(   <Icon name={(i+1) < mark?
+    console.log(i,mark, (i+1) <= mark)
+    stars.push(   <Icon name={(i+1) <= mark?
       "star" :
       ((i+1) > mark && i < mark)?
         "star-half" :

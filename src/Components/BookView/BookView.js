@@ -30,10 +30,10 @@ export default ({navigation, route})=> {
   console.log("BookView render 3 загрузки: инициализация, title, Комменты ");
 
   const {item} = route.params;
-  const {sequencesTitle, sequencesId, author, content, title, image, downloads} = item;
-  const [comments, setComments] = useState([]);
-  const [recommendation, setRecommendation] = useState(0);
-  const [marks, setMarks] = useState([10,3.5]);
+  const {sequencesTitle, sequencesId, author, content, title, image, downloads, comments, marks, recommendation} = item;
+  const [stateComments, setComments] = useState([]);
+  const [stateRecommendation, setRecommendation] = useState(0);
+  const [stateMarks, setMarks] = useState([10,3.5]);
   const [fetching, setFetching] = useState(false);
   //const fb2 = useRef(downloads?.filter(el=>el.type==="fb2")[0])
 
@@ -87,7 +87,7 @@ export default ({navigation, route})=> {
       setFetching(true);
       const downloadedFile = await FileSystem.downloadAsync(url,FileSystem.documentDirectory + 'book.fb2.zip')
        // .then((downloadedFile ) => {
-      console.log("downloadedFile", downloadedFile);
+      //console.log("downloadedFile", downloadedFile);
       const {uri, headers} = downloadedFile;
       const fileName = headers["Content-Disposition"]?.split("filename=")[1];
      // console.log("filename", fileName);
@@ -140,16 +140,19 @@ export default ({navigation, route})=> {
   }
 
   const handleCommentsFetch = async()=> {
-    console.log("get comments")
-    const [_recommendation, _comments, _marks] = await getComments(item.bid);
-    setComments(_comments);
-    setRecommendation(_recommendation);
-    setMarks(_marks);
+    //console.log("get comments")
+    //const [_recommendation, _comments, _marks] = await getComments(item.bid);
+    //setComments(_comments);
+    //setRecommendation(_recommendation);
+    //setMarks(_marks);
   }
 
   useEffect(() => {
     navigation.setOptions({title: item.title});
-    handleCommentsFetch();
+    setComments(comments || []);
+    setRecommendation(recommendation || 0);
+    setMarks(marks || [0,0]);
+    //handleCommentsFetch();
     //downloadBookFromServer("644094");
   }, []);
 
@@ -177,10 +180,10 @@ export default ({navigation, route})=> {
         )}
       </View>
       <View>
-        <Text>Книгу рекомендовали: {recommendation}</Text>
-        <Text>Оценок: {marks && marks[0]}, средняя  {marks && marks[1]}</Text>
+        <Text>Книгу рекомендовали: {stateRecommendation}</Text>
+        <Text>Оценок: {stateMarks && stateMarks[0]}, средняя  {stateMarks && stateMarks[1]}</Text>
       </View>
-      <Comments>{comments}</Comments>
+      <Comments>{stateComments}</Comments>
     </ScrollView>
 
   )

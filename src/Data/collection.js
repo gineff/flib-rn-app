@@ -1,45 +1,82 @@
 import {xmlParser, fb2Parser, htmlParser} from "../service";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-const proxyCorsUrl = "https://api.allorigins.win/raw?cacheMaxAge=900&url=";
-const opdsCatalog = "http://flibusta.is/opds";
+const proxyCorsUrl = "https://api.allorigins.win/raw?disableCache=1&url=";
+const opdsCatalog = "http://flibusta.is";
 const serverUrl = "http://gineff.ddns.net:3000/books";
 
-//const cache = new Map();
+const cache = new Map();
+const maxCacheAge = 24*60*60*1000;
 
 const request = async (url, options) => {
-//  if(cache.has(url)) return cache.get(url)
-  const res = await fetch(proxyCorsUrl+encodeURI(url), options);
-  if(res.status !== 200) return new Error("server error");
-  return options?  await res.json() :  await res.text();
+  console.log("url", proxyCorsUrl+encodeURIComponent(url));
+  const now = new Date();
+  const cache = JSON.parse(await AsyncStorage.getItem("cache") || {});
+  let value = cache[url];
+  const age = new Date(value?.age) ;
 
+  console.log("now", now)
+  console.log("age",  age)
+  console.log("now - age", now - age)
+  console.log("options.cache",  options.cache)
+  console.log("now - age > options.cache",  now - age > options.cache)
+  if(!value || (now - age > options.cache)){
+    const res = await fetch(proxyCorsUrl+encodeURIComponent(url));
+    if(res.status !== 200) return new Error("server error");
+    const text = await res.text();
+    value = {text, age: now}   ;
+  }
+
+  const newCache = {...cache, [url]: value}
+  AsyncStorage.setItem("cache", JSON.stringify(newCache));
+  return  value.text;
 }
 
-//когда обнуляется page?
+const updateCache = async ()=> {
+  const now = new Date();
+  const cache = JSON.parse(await AsyncStorage.getItem("cache")) || {};
+  const updatedCache = {};
 
+  for(let key in cache){
+    const el = cache[key];
+    if(now - new Date(el.age) < maxCacheAge){updatedCache[key]= el}
+  }
+  AsyncStorage.setItem("cache", JSON.stringify(updatedCache));
+}
 
 const Collection = class {
   constructor(options) {
     this.page = 1;
+    this.setOptions(options);
+    updateCache()
+  }
+
+  setOptions (options) {
     Object.assign(this, options);
   }
+
   async request (options = {}) {
     console.log("request",this)
     const {queryType = this.queryType, queryId = this.queryId, page = this.page} = options;
     switch (queryType) {
       case "author":
-        return await request(`${opdsCatalog}/author/${queryId}/time/${(page-1)}`);
+        return await request(`${opdsCatalog}/opds/author/${queryId}/time/${(page-1)}`, {cache: 15*60*1000});
       case "sequence":
-        return await request(`${opdsCatalog}/sequencebooks/${queryId}/${page-1}`);
+        return await request(`${opdsCatalog}/opds/sequencebooks/${queryId}/${page-1}`, {cache: 15*60*1000});
       case "newForWeek":
-        return await request(`${opdsCatalog}/new/${page-1}/new`);
+        return await request(`${opdsCatalog}/opds/new/${page-1}/new`,  {cache: 5*60*1000});
       case "genre":
-        return await request(`${opdsCatalog}/opds/new/${page-1}/newgenres/${queryId}`);
+        return await request(`${opdsCatalog}/opds/new/${page-1}/newgenres/${queryId}`, {cache: 5*60*1000});
       case "genres":
-        return await request(`${opdsCatalog}/opds/newgenres/`);
-      case "listFromServer":
-        return await fetch(`${serverUrl}/list/${queryId}`,options).then(res=>res.json());
+        return await request(`${opdsCatalog}/opds/newgenres/${page-1}`,{cache: 3*60*60*1000});
       case "listFromSite":
-        return await request(`${opdsCatalog}/stat/${queryId}`);
+        return await request(`${opdsCatalog}/stat/${queryId}`, {cache: 60*60*1000});
+      case "search":
+        return await request(`${opdsCatalog}/opds/opensearch?searchType=books&searchTerm=${queryId}&pageNumber=${page-1}`,{cache: 30*1000});
+      case "searchByTitle":
+        return await request(`${opdsCatalog}/opds/search?searchType=books&searchTerm=${queryId}&pageNumber=${page-1}`,{cache: 30*1000});
+      case "searchByAuthor":
+        return await request(`${opdsCatalog}/opds/search?searchType=authors&searchTerm=${queryId}&pageNumber=${page-1}`,{cache: 30*1000});
+
     }
   }
 
@@ -63,6 +100,30 @@ const Collection = class {
     this.queryId = id;
     return this.parse(await this.request(),"opds");
   }
+  async getAuthors(page) {
+    /*return this.parse(await this.request({queryType: "searchByAuthor", page}), "opds")
+      .map(el=> ({id: el.genreId, title: el.title, count: el.content.split(" ").shift()}));*/
+  }
+
+  async getGenres(page) {
+    /*todo
+    *  загрузка с сервера (на сервере обнавляется раз в 6 часов)
+    * если загрузка с сайта, то постепенная загрузка, не ожидая когда загрузится весь список
+    * */
+
+   // if(cache.has("genres")) return cache.get("genres");
+
+    const genres = this.parse(await this.request({queryType: "genres", page}), "opds")
+      .map(el=> ({id: el.genreId, title: el.title, count: el.content.split(" ").shift()}));
+
+
+/*    const genres = this.parse(await this.request({queryType: "genres"}), "opds")
+      .map(el=> ({id: el.genreId, title: el.title, count: el.content.split(" ").shift()}))*/
+
+    //cache.set("genres", genres);
+    return genres;
+
+  }
 
   async newForWeek(page = 1) {
     this.page = page;
@@ -70,86 +131,120 @@ const Collection = class {
     return this.parse(await this.request(),"opds");
   }
 
-  async list(id, options) {
+  async getListFromSite() {
+    const text = await this.request({queryType: "listFromSite", queryId: id}) || "";
+    const listFromSite = this.parse(text, "html") || [];
+  }
 
-    this.queryType = "list";
-    this.queryId = id;
-    const {savedList} = options;
-    let listFromSite = [];
+  async getList(name) {
+    const detail = false;
+    const id = (name === "popularForWeek")? "w" : "24";
+    const savedList = await this.storage.get(name);
 
     //1.
     //получаем список id с сервера
-    const newBooksID = await fetch(`${serverUrl}/list/${id}`).then(res=> res.json()) ||
+    let newBooksID, popularBooks, listFromSite;
+    try {
+      const res = await fetch(`${serverUrl}/list/${id}`);
+      if(res.status !== 200) throw new Error("");
+      popularBooks = await res.json();
+      newBooksID = popularBooks && popularBooks.map(el => el.bid)
 
-    //или получаем данные с сайта
-      await (async ()=> {
-        const text = await this.request({queryType: "listFromSite", queryId: this.queryId}) || "";
-        listFromSite = this.parse(text,"html-popularList") || [];
-        return listFromSite.reduce((arr,el)=>{if(el?.bid){arr.push(el.bid)} return arr},[])
-      })()
+    }catch(e) {
+      //или получаем данные с сайта
+      const text = await this.request({queryType: "listFromSite", queryId: id}) || "";
+      listFromSite = this.parse(text, "html") || [];
+      newBooksID = listFromSite.reduce((arr, el) => {
+        if (el?.bid) {
+          arr.push(el.bid)
+        }
+        return arr
+      }, [])
+
+    }
+    if(detail) console.log(1, "new books", newBooksID )
 
     //2.
     //получаем список id из локального хранилища
     const listOfBooksId = savedList.map(el=>el.bid);
+    if(detail) console.log(2, "listOfBooksId", listOfBooksId )
+
 
     //3.
     //сравнение и подготовка списка id недостающих книг
     const ListOfMissingBooksId = newBooksID.filter(id=> !listOfBooksId.includes(id));
+    if(detail) console.log(3, "ListOfMissingBooksId", ListOfMissingBooksId )
 
-    //4.
-    // запрос недостающих книг с сервера
-    const newBooks = await fetch(serverUrl, {
-      method: 'POST',
-      headers: {"Content-Type": "application/json"},
-      body:  JSON.stringify(ListOfMissingBooksId)
-    }).then(res=> res.json()) ||
+    //4. запрос недостающих книг + обновление рейтингов
+    let newBooks = [];
 
-    //или запрос недостающих книг с сайта
-      await (async ()=>{
-        const books = [];
+    if(ListOfMissingBooksId.length !== 0) {
+      try{
+        // запрос недостающих книг с сервера
+        newBooks = await fetch(serverUrl, {
+          method: 'POST',
+          headers: {"Content-Type": "application/json"},
+          body:  JSON.stringify(ListOfMissingBooksId)
+        }).then(res=> res.json())
+      }catch(e){
+        //или запрос недостающих книг с сайта
         for(let id of ListOfMissingBooksId){
           const book = listFromSite.filter(el=>el.bid === id)[0];
-          const foundBook = await this.findBookByAuthor(book);
-          if(foundBook) books.push(foundBook);
+          const foundBook = await this.findBookByAuthor(book.bid, book?.author[0]?.id, 1);
+          if(foundBook) newBooks.push(foundBook);
         }
-        return books;
-    })()
+      }
+    }
+    if(detail) console.log(4, "newBooks" )
+
 
     //5.
     //объединяем списки используя Map
     const map = new Map();
     savedList.forEach(el=> map.set(el.bid, el))
+    //добавляем оценки
+    if(popularBooks) {
+      popularBooks.forEach(el=> {
+        if( map.has(el.bid)) map.set(el.bid, {...map.get(el.bid), ...el})
+      })
+    }
     newBooks.forEach(el=> map.set(el.bid, el))
+
 
     //6.
     //создаем список книг
     //на флибусте бывает так, что в популярных списках у книги один id, а в книгах у автора другой.
     //это происходит из-за того, что книгу обновили, а в списках осталась прежняя версия
     const list = newBooksID.reduce((arr, id)=> {if(map.has(id)) {arr.push( map.get(id))} return arr},[])
+    if(detail) console.log(6, "list" )
+
+
 
     //7.
     //сохранение списка в локальном хранилище
-    //await this.storage.set(id, JSON.stringify(list))
+    //await this.storage.set(name, JSON.stringify(list))
 
     return list;
   }
 
   async nextPage(page) {
     this.page = this.page + 1;
+    console.log("page", this.page)
     return await this.request();
   }
 
-  async getPage(page) {
-    this.page = page;
+  async getPage(page = this.page) {
+   // this.page = page;
     return this.parse(await this.request(), this.source)
   }
 
   async findBookByAuthor(bookId, authorId, page = 1) {
-    const data = this.author(authorId, page)
+    const data = await this.author(authorId, page)
     const filteredData = data.filter(el => el.bid === bookId)[0];
     if(data.length === 20 && filteredData === undefined){
       return await this.findBookByAuthor(bookId, authorId, ++page);
     }else{
+      console.log("find by author", filteredData.title)
       return filteredData;
     }
   }

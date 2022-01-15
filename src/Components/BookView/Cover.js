@@ -1,5 +1,5 @@
 import {StyleSheet, Image, Text, View} from "react-native";
-import React, {useRef} from "react";
+import React from "react";
 import {proxyImageUrl} from "../../Data"
 
 const createImageUrl = (cover)=> {
@@ -9,7 +9,7 @@ const createImageUrl = (cover)=> {
 const Cover = ({image, title, style})=> {
   return <View  style={[styles.bookCoverWrapper, style]}>
     {image?
-      (<Image  style={styles.bookCover} source={{uri: createImageUrl(image) }} />) :
+      (<Image  style={styles.bookCover} source={{uri: createImageUrl(image), cache: "force-cache" }} />) :
       (<Text style={styles.bookCoverText}>{title}</Text>)
     }
   </View>

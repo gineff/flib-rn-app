@@ -5,6 +5,7 @@ import {Colors} from "../../Styles";
 import {getText, xmlParser} from "../../service";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+
 const GenreItem = ({genre, setFilter})=> {
   return (
     <TouchableOpacity onPress={()=> {setFilter(genre)}} >
@@ -23,8 +24,8 @@ const GenreItem = ({genre, setFilter})=> {
 const getGenresFromList = async (queryType)=> {
 
   //получаем спиок книг из локального хранилища
-  const listName = `LIST-${queryType === "popularForWeek"? "W" : "24"}`;
-  const result = await AsyncStorage.getItem(listName) ;
+
+  const result = await AsyncStorage.getItem(queryType) ;
   const books = result? JSON.parse(result) : [];
 
   //группируем книги по жанрам в формате {genreId: count}
@@ -43,25 +44,43 @@ const getGenresFromList = async (queryType)=> {
   return _genres.sort((a,b)=> b.count-a.count)
 }
 
-const getGenresFromOPDS = async ()=> {
+const getGenresFromOPDS = async (collection)=> {
 
   //загрузка жанров из opds библиотеки flibusta
   const text = await getText('/opds/newgenres');
   const  _genres = await xmlParser(text);
-
+  const counter = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  for(let page of counter) {
+    const genres = await collection.getGenres(page)
+    //break;
+  }
   //возвращаем отсортированный по count список
   return _genres.map(el=> ({id: el.genreId, title: el.title, count: el.content.split(" ").shift()}))
 }
 
 
-export default ({filter, setFilter, source, queryType})=> {
+export default ({filter, collection,  setFilter, source, queryType})=> {
 
   const [genres, setGenres] = useState([]);
   const [refresh, setRefresh] = useState(true);
 
   //загрузка жанров, либо из opds библиотеки flibusta, либо группируем списки популярных книг по жарам
   const getGenres = async ()=> {
-    setGenres(source === "opds"? await getGenresFromOPDS():  await getGenresFromList(queryType));
+    //setGenres(source === "opds"? await getGenresFromOPDS(collection) :  await getGenresFromList(queryType));
+    if(source === "opds"){
+      const counter = [ 2, 3, 4, 5, 6, 7, 8, 9, 10];
+      const _genres = await collection.getGenres(1);
+      setGenres(_genres);
+      for(let page of counter) {
+        _genres.push( ...(await collection.getGenres(page)));
+        if(!_genres || _genres.length < 20) break;
+      }
+      console.log('set genres')
+      setGenres(_genres);
+    }else{
+      setGenres( await getGenresFromList(queryType))
+    }
+
     setRefresh(false);
   }
 

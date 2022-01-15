@@ -1,5 +1,5 @@
 import React, {useEffect, useState, useCallback} from 'react';
-import {StyleSheet, Text, View, Image, TouchableOpacity} from 'react-native';
+import {StyleSheet, Text, View, Image, TouchableOpacity, Platform} from 'react-native';
 import {Authors, Sequences, Cover, Content, Genres, StarsRating} from "../BookView"
 import {Colors} from "../../Styles"
 import Icon from "react-native-vector-icons/Ionicons";
@@ -11,7 +11,8 @@ const BookItem =  ({item, index, navigation, onGenreClick})=> {
     navigation.navigate("Book",{item})
   }
 
-  const {sequencesTitle, sequencesId, author, content, title, image, genre, year} = item;
+  const {bid, sequencesTitle, sequencesId, author, content, title, image, genre, year, marks, recommendation} = item;
+  //console.log("marks", bid, marks);
 
   return (
       <View style={styles.listItem} >
@@ -19,11 +20,11 @@ const BookItem =  ({item, index, navigation, onGenreClick})=> {
           <View style={styles.bookLeftSide}>
             <View style={styles.bookCoverNDateWrapper}>
               <Cover image={image} title={title}/>
-              <TouchableOpacity  onPress={()=>{alert("rating")}}
+              {marks && <TouchableOpacity  onPress={()=>{alert("rating")}}
                                  style={styles.bookStarRating}>
-                <StarsRating marks={[10,4.2]} size={16}/>
-                <Icon name="information-outline" size={18}/>
-              </TouchableOpacity>
+                <StarsRating marks={marks} size={16}/>
+                {(Platform.OS !== "web") && <Icon name="information-outline" size={18}/>}
+              </TouchableOpacity>}
             </View>
             {/*<Text style={styles.bookYear}>{year}</Text>*/}
           </View>
@@ -60,7 +61,7 @@ const styles = StyleSheet.create({
     paddingBottom: 5,
   },
   bookWrapper: {
-    flexDirection: "column", paddingHorizontal: 0,  flex: 2, marginLeft: 10
+    flexDirection: "column", paddingHorizontal: 0,  flex: 2, marginLeft: 10, paddingRight: 5
   },
 
   bookTitle: {
@@ -77,7 +78,8 @@ const styles = StyleSheet.create({
     margin: 10,
     marginVertical: 5,
     borderRadius: 10,
-    backgroundColor: "#FFF"
+    backgroundColor: "#FFF",
+    justifyContent: "space-between"
   },
   listItemBottom: {
     margin: 5,

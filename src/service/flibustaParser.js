@@ -184,7 +184,7 @@ const xmlParser = function(xml) {
   return books;
 };
 
-const htmlParser = async (text)=> {
+const htmlParser = (text)=> {
   const matches = Array.from(matchAll(text,/<a href="\/a\/(.*?)">(.*?)<\/a> - <a href="\/b\/(.*?)">(.*?)<\/a>/g));
   return  matches.map(el=>({
     bid:el[3],
