@@ -8,6 +8,18 @@ import {xmlParser, htmlParser, getText, cutString} from "../../service";
 import {serverUrl, Collection} from "../../Data";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+const listQueryTypeToSave = [
+  "newForWeek",
+  "popularForWeek",
+  "popularForDay",
+  "searchByTitle"
+]
+
+const isQueryTypeToSave = (queryType)=> {
+  return listQueryTypeToSave.includes(queryType)
+  //return queryType === "newForWeek" || queryType === "popularForWeek" || queryType === "popularForDay" || queryType === "searchByTitle"
+}
+
 export default ({navigation, route})=> {
 
   const {title, source, queryType, query} = route.params;
@@ -23,6 +35,7 @@ export default ({navigation, route})=> {
   const start = useRef(new Date());
   const collection = useRef();
   const { width, height } = Dimensions.get('window');
+  let isServerlessMode = false;
 
   console.log(`render ===============BooksView============== ${new Date()-start.current}`, `refresh= ${refresh}`, `books length ${books?.length}`);
 
@@ -138,6 +151,7 @@ export default ({navigation, route})=> {
 
   const handleLoadMore = () => {
     //в браузере неверно работает onEndReached
+    //todo в браузере
     if(Platform.OS === "web") return;
     //refresh = true - уже идет загрузка. если books.length < 20 достигнут конец (последняя страница)
     if (!refresh && books.length && books.length% 20 === 0) {
@@ -152,13 +166,47 @@ export default ({navigation, route})=> {
 
   //** get data methods
 
+  const deferredBooks = ()=> {
+    console.log("deferredBooks books", books)
+  }
+
+  const extendBooks = async ()=> {
+    /*return new Promise((resolve)=>{
+      setTimeout(() => {console.log("extended books"); resolve("ignored")}, 30000);
+    })*/
+    //setTimeout(function() {console.log("extended books", books);}, 5000);
+    for(let book of books) {
+      if(book.simple){
+        const bid = book
+        if(!book.author[0].id) continue;
+        const foundBook = await collection.current.findBookByAuthor(book.bid, book.author[0].id);
+       // if(!foundBook) continue;
+        const _books = books.map(el=> el.bid === book.bid
+          ? (foundBook
+            ? foundBook
+            : (el.simple = false) || el)
+          : el
+        );
+        await collection.current.storage.set(queryType, _books)
+        setBooks(_books);
+        break;
+      }
+    }
+  }
+
+  const handleServerlessMode = ()=> {
+    isServerlessMode = true;
+    setServerLessMode(true);
+
+    return true;
+  }
+
   const getOPDSData = async ()=> {
     return await collection.current.getPage();
   }
 
   const getListDataFromSite = async ()=> {
-    setServerLessMode(true);
-    return await collection.current.getListFromSite(queryType);
+    return  await collection.current.getListFromSite(queryType);
   }
 
   const getListDataFromServer  = async ()=> {
@@ -166,48 +214,61 @@ export default ({navigation, route})=> {
   }
 
   const getListData = async ()=> {
-    return await  getListDataFromServer() ||  await getListDataFromSite()
+    return await  getListDataFromServer() || handleServerlessMode() && await getListDataFromSite()
   }
 
-  const getFromStorage = async ()=> {
+  const getDataFromStorage = async ()=> {
     return  await collection.current.storage.get(queryType) ;
   }
 
-  const isQueryTypeToSave = ()=> {
-    return queryType === "newForWeek" || queryType === "popularForWeek" || queryType === "popularForDay" || queryType === "searchByTitle"
-  }
+  /*
+  const extendListFromStorage = async (data)=> {
 
+    const savedData = await collection.current.storage.get(queryType);
+
+    if(savedData){
+      const map = new Map();
+
+      data.forEach(el=>map.set(el.bid,el));
+      savedData.forEach(el=>map.set(el.bid,el));
+
+      return data.map(el=>map.get(el.bid))
+    }else{
+      return  data;
+    }
+
+  }
+*/
   const getData = async (resetBooks= false)=> {
     //два типа источника данных: библиотека opds flibusta (opds) и список популярных книг с сайта (html) /stat/w и
     // /stat/24. Списки сначала загружаются из Локального Хранилища , затем в фоне данные загружаются с сервера, либо
     //если сервер не доступен, с сайта Флибусты загружаются списки и затем ищутся книги в opds бибилиотеке
-    //console.log("get data")
-    //console.log("navigation", navigation)
-    //console.log("route", route)
+
     let data;
-    //если первый запуск и ...
-    if(refInit.current && isQueryTypeToSave()){
-      data = await getFromStorage();
+    //если первый запуск и данные сохраняются
+    if(refInit.current && isQueryTypeToSave(queryType)){
+      data = await getDataFromStorage();
     }else{
-      data = (source ===  "opds")?
-        await getOPDSData() :
-        await getListData() ;
+      data = (source ===  "opds")
+        ? await getOPDSData()
+        : await getListData();
+
+      if(!isServerlessMode && isQueryTypeToSave(queryType)) {
+        await collection.current.storage.set(queryType, data)
+      }
     }
+    // todo: if data instanceof Error
+
     const _books = resetBooks? [] : books;
     setBooks([..._books, ...data]);
 
-    //if _books[0].simple
-    //
+
     //первоначально данные загружаются из локального хранилища. Далее инициализируем загрузку с сервера
-    if(refInit.current && isQueryTypeToSave()){
+
+    if(refInit.current){
       refInit.current = false;
-      getData()
-    }else if(isQueryTypeToSave()){
-      await collection.current.storage.set(queryType, data)
+      if(isQueryTypeToSave(queryType))  getData()
     }
-    console.log("end")
-
-
   }
 
   /*END get data methods  */
@@ -222,10 +283,9 @@ export default ({navigation, route})=> {
   },[])
 
   useEffect(()=>{
-    //console.log(`books updated ${new Date()-start.current}`, books);
-
     if(!refInit.current){
       setRefresh(false);
+      if(books.length && serverlessMode) extendBooks();
     }
   },[books])
 

@@ -10,15 +10,19 @@ const maxCacheAge = 24*60*60*1000;
 const request = async (url, options) => {
   console.log("url", proxyCorsUrl+encodeURIComponent(url));
   const now = new Date();
-  const cache = JSON.parse(await AsyncStorage.getItem("cache") || {});
-  let value = cache[url];
+
+  const key = `cache-${url}`;
+  //const cache = JSON.parse(await AsyncStorage.getItem("cache") || {});
+  //let value = cache[url];
+  let value = JSON.parse(await AsyncStorage.getItem(key));
+
   const age = new Date(value?.age) ;
 
-  console.log("now", now)
+  /*console.log("now", now)
   console.log("age",  age)
   console.log("now - age", now - age)
   console.log("options.cache",  options.cache)
-  console.log("now - age > options.cache",  now - age > options.cache)
+  console.log("now - age > options.cache",  now - age > options.cache)*/
   if(!value || (now - age > options.cache)){
     const res = await fetch(proxyCorsUrl+encodeURIComponent(url));
     if(res.status !== 200) return new Error("server error");
@@ -26,21 +30,36 @@ const request = async (url, options) => {
     value = {text, age: now}   ;
   }
 
-  const newCache = {...cache, [url]: value}
-  AsyncStorage.setItem("cache", JSON.stringify(newCache));
+  //const newCache = {...cache, [url]: value}
+  console.log("set", key);
+  AsyncStorage.setItem(key, JSON.stringify(value));
   return  value.text;
 }
 
 const updateCache = async ()=> {
   const now = new Date();
-  const cache = JSON.parse(await AsyncStorage.getItem("cache")) || {};
+  await AsyncStorage.removeItem("cache");
+  const keys = await AsyncStorage.getAllKeys();
+  console.log("keys", keys);
+  const cacheKeys = keys.filter(key=> key.slice(0,5) === "cache");
+  console.log("cacheKeys", cacheKeys)
+  for(let key of cacheKeys) {
+    const value = await AsyncStorage.getItem(key);
+    if(now - new Date(value.age) < maxCacheAge) {
+      console.log("delete cache - key", key)
+      await AsyncStorage.removeItem(key);
+    }
+  }
+  await AsyncStorage.removeItem("cache");
+
+  /*const cache = JSON.parse(await AsyncStorage.getItem("cache")) || {};
   const updatedCache = {};
 
   for(let key in cache){
     const el = cache[key];
     if(now - new Date(el.age) < maxCacheAge){updatedCache[key]= el}
   }
-  AsyncStorage.setItem("cache", JSON.stringify(updatedCache));
+  AsyncStorage.setItem("cache", JSON.stringify(updatedCache));*/
 }
 
 const Collection = class {
@@ -131,13 +150,33 @@ const Collection = class {
     return this.parse(await this.request(),"opds");
   }
 
-  async getListFromSite() {
+  async getListFromSite(name) {
+
+    const id = (name === "popularForWeek")? "w" : "24";
     const text = await this.request({queryType: "listFromSite", queryId: id}) || "";
     const listFromSite = this.parse(text, "html") || [];
+    const savedData = await this.storage.get(name);
+    //console.log("listFromSite", listFromSite);
+    if(savedData){
+      const map = new Map();
+
+      listFromSite.forEach(el=>map.set(el.bid,el));
+      savedData.forEach(el=>map.set(el.bid,el));
+      //console.log("map",map)
+      return listFromSite.map(el=>map.get(el.bid))
+
+    }else{
+      return listFromSite
+    }
+
+
+
   }
 
   async getList(name) {
-    const detail = false;
+
+    //return false;
+    const detail = true;
     const id = (name === "popularForWeek")? "w" : "24";
     const savedList = await this.storage.get(name);
 
@@ -151,17 +190,9 @@ const Collection = class {
       newBooksID = popularBooks && popularBooks.map(el => el.bid)
 
     }catch(e) {
-      //или получаем данные с сайта
-      const text = await this.request({queryType: "listFromSite", queryId: id}) || "";
-      listFromSite = this.parse(text, "html") || [];
-      newBooksID = listFromSite.reduce((arr, el) => {
-        if (el?.bid) {
-          arr.push(el.bid)
-        }
-        return arr
-      }, [])
-
+      return false;
     }
+
     if(detail) console.log(1, "new books", newBooksID )
 
     //2.
@@ -188,11 +219,12 @@ const Collection = class {
         }).then(res=> res.json())
       }catch(e){
         //или запрос недостающих книг с сайта
-        for(let id of ListOfMissingBooksId){
+        return false;
+        /*for(let id of ListOfMissingBooksId){
           const book = listFromSite.filter(el=>el.bid === id)[0];
           const foundBook = await this.findBookByAuthor(book.bid, book?.author[0]?.id, 1);
           if(foundBook) newBooks.push(foundBook);
-        }
+        }*/
       }
     }
     if(detail) console.log(4, "newBooks" )
@@ -244,17 +276,28 @@ const Collection = class {
     if(data.length === 20 && filteredData === undefined){
       return await this.findBookByAuthor(bookId, authorId, ++page);
     }else{
-      console.log("find by author", filteredData.title)
+      console.log("find by author", filteredData?.title)
       return filteredData;
     }
   }
 
   storage = {
     get: async (key)=> {
-      return JSON.parse(await AsyncStorage.getItem(key)) || []
+      try{
+        return JSON.parse(await AsyncStorage.getItem(key)) || []
+      }catch(e){
+        console.log("key", key, e)
+        return e;
+      }
+
     },
     set: async (key, value)=> {
-      return AsyncStorage.setItem(key, JSON.stringify(value))
+      try{
+        return AsyncStorage.setItem(key, JSON.stringify(value))
+      }catch(e){
+        console.log(key, value, e)
+        return e;
+      }
     }
   }
 }

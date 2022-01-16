@@ -21,7 +21,7 @@ const SidebarMenu = (props)=> {
       headerTintColor: '#fff',
       headerTitleAlign: 'center'
     }}
-    initialRouteName = "Поиск"
+    initialRouteName = "Популярные за неделю"
     drawerContent={(props) => <CustomSidebarMenu {...props} />}>
 
     <Drawer.Screen
