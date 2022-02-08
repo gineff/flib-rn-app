@@ -3,10 +3,11 @@ import {FlatList, Text, TouchableOpacity, View, Platform, StyleSheet, Dimensions
 import BookItem from "./BookItem";
 import FilterView from "./FilterView";
 import Icon from "react-native-vector-icons/Ionicons";
-import {Colors} from "../../Styles";
+import {Colors, dimensions, containerWidth} from "../../Styles";
 import {xmlParser, htmlParser, getText, cutString} from "../../service";
 import {serverUrl, Collection} from "../../Data";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import {Button} from "react-native-web";
 
 const listQueryTypeToSave = [
   "newForWeek",
@@ -152,7 +153,7 @@ export default ({navigation, route})=> {
   const handleLoadMore = () => {
     //в браузере неверно работает onEndReached
     //todo в браузере
-    if(Platform.OS === "web") return;
+    //if(Platform.OS === "web") return;
     //refresh = true - уже идет загрузка. если books.length < 20 достигнут конец (последняя страница)
     if (!refresh && books.length && books.length% 20 === 0) {
       getNextPage();
@@ -218,6 +219,8 @@ export default ({navigation, route})=> {
   }
 
   const getDataFromStorage = async ()=> {
+    // arrayOfId = await collection.current.storage.get(queryType) ;
+    // data = await collection.current.storage.get(arrayOfId) ;
     return  await collection.current.storage.get(queryType) ;
   }
 
@@ -289,28 +292,33 @@ export default ({navigation, route})=> {
     }
   },[books])
 
-  return <View style={styles.container}><View style={{backgroundColor: Colors.secondaryTint, width: (Platform.OS === "web"? 1000 : "100%")}}>
+  return <View style={styles.container}>
+    <View style={[styles.booksWrapper, {maxWidth: containerWidth}]}>
     {!!errors.length && (<Text>{errors.map(el=> `${el.message}\r\n`)}</Text>)}
     {filterIsVisible? (<FilterView filter={filter} setFilter= {setFilter} collection={collection.current} queryType={queryType} source={source}/>) :
       (<FlatList
-        numColumns = {Platform.OS === "web"? 2 : 1}
         ref={flatListRef}
         onRefresh={onRefresh}
         refreshing={refresh}
         data={books}
-        onEndReached={handleLoadMore}
+        onEndReached={()=>{Platform.OS !== "web" && handleLoadMore()}}
         onEndReachedThreshold={0.1}
         keyExtractor={(item, index) => "key"+index}
         renderItem={({item, index}) => {
           return (<BookItem item={item} index={index} navigation={navigation} onGenreClick={onGenreClick}/>);
         }}
       />)}
-  </View></View>
+  </View>
+    {(Platform.OS === "web") && (<View><Button onPress={handleLoadMore} title="Load more"/></View>)}
+  </View>
 }
 
 const styles = StyleSheet.create({
   container: {
     alignItems : "center"
+  },
+  booksWrapper: {
+
   },
   filterIcon: {
     color:"#FFF", marginRight: 10, padding: 5, paddingHorizontal: 10, borderRadius: 5,

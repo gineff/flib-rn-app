@@ -1,10 +1,11 @@
 import React, {useEffect, useState, useCallback} from 'react';
-import {StyleSheet, Text, View, Image, TouchableOpacity, Platform} from 'react-native';
+import {StyleSheet, Text, View, Image, TouchableOpacity, Platform, Dementions, Dimensions} from 'react-native';
 import {Authors, Sequences, Cover, Content, Genres, StarsRating} from "../BookView"
-import {Colors} from "../../Styles"
+import {Colors, containerWidth} from "../../Styles"
 import Icon from "react-native-vector-icons/Ionicons";
 
 const BookItem =  ({item, index, navigation, onGenreClick})=> {
+  const { width, height } = Dimensions.get('window');
 
   if(index === 0) console.log("BookItem render");
   const navigateBook = ()=> {
@@ -15,7 +16,7 @@ const BookItem =  ({item, index, navigation, onGenreClick})=> {
   //console.log("marks", bid, marks);
 
   return (
-      <View style={styles.listItem} >
+      <View style={[styles.listItem, {padding: containerWidth >= 700? 15 : 0}]} >
         <TouchableOpacity  onPress = {navigateBook} style={{flexDirection: "row"}}>
           <View style={styles.bookLeftSide}>
             <View style={styles.bookCoverNDateWrapper}>

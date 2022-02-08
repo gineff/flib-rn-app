@@ -40,12 +40,13 @@ const updateCache = async ()=> {
   const now = new Date();
   await AsyncStorage.removeItem("cache");
   const keys = await AsyncStorage.getAllKeys();
-  console.log("keys", keys);
   const cacheKeys = keys.filter(key=> key.slice(0,5) === "cache");
   console.log("cacheKeys", cacheKeys)
   for(let key of cacheKeys) {
-    const value = await AsyncStorage.getItem(key);
-    if(now - new Date(value.age) < maxCacheAge) {
+    const value = JSON.parse(await AsyncStorage.getItem(key));
+
+    //console.log("now", now - new Date(value.age), "max" ,maxCacheAge)
+    if(now - new Date(value.age) > maxCacheAge) {
       console.log("delete cache - key", key)
       await AsyncStorage.removeItem(key);
     }
@@ -217,14 +218,10 @@ const Collection = class {
           headers: {"Content-Type": "application/json"},
           body:  JSON.stringify(ListOfMissingBooksId)
         }).then(res=> res.json())
+        
       }catch(e){
         //или запрос недостающих книг с сайта
         return false;
-        /*for(let id of ListOfMissingBooksId){
-          const book = listFromSite.filter(el=>el.bid === id)[0];
-          const foundBook = await this.findBookByAuthor(book.bid, book?.author[0]?.id, 1);
-          if(foundBook) newBooks.push(foundBook);
-        }*/
       }
     }
     if(detail) console.log(4, "newBooks" )
@@ -284,13 +281,19 @@ const Collection = class {
   storage = {
     get: async (key)=> {
       try{
-        return JSON.parse(await AsyncStorage.getItem(key)) || []
+        if(Array.isArray(key)){
+          const values = await AsyncStorage.multiGet(keys);
+          return values.map(arr=> arr[1]);
+        }else{
+          return JSON.parse(await AsyncStorage.getItem(key)) || []
+        }
       }catch(e){
         console.log("key", key, e)
         return e;
       }
 
     },
+
     set: async (key, value)=> {
       try{
         return AsyncStorage.setItem(key, JSON.stringify(value))

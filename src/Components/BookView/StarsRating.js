@@ -17,7 +17,7 @@ const Stars = ({marks, size})=> {
     } key={i} style={styles.star} size={size || 30}/> )
   }
   return   <View style={styles.stars}>
-      {(Platform.OS === "web")? (<Text>Средня оценка {mark}</Text>) : stars}
+      {(Platform.OS === "web")? (<Text styles={{color: Colors.prime}}>Средня оценка {mark}</Text>) : stars}
     </View>
 
 }

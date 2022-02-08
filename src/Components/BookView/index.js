@@ -1,4 +1,4 @@
-//import BookView from "./BookView.js";
+
 import Authors from "./Authors";
 import Content from "./Content";
 import Cover from "./Cover";
@@ -8,7 +8,7 @@ import StarsRating from "./StarsRating";
 import Comments from "./Comments";
 
 import React, {useEffect, useState, useRef} from 'react';
-import {StyleSheet, Text, View, Image, ScrollView, Button, TouchableOpacity, ActivityIndicator} from 'react-native';
+import {StyleSheet, Text, View, Image, ScrollView, Button, TouchableOpacity, ActivityIndicator, Linking, Platform} from 'react-native';
 //import {StarsRating, Authors, Sequences, Comments, Content} from './index.js';
 
 import {commentParser, getText, fb2Parser} from "../../service";
@@ -26,11 +26,23 @@ const createImageUrl = (cover)=> {
   return proxyImageUrl+ "http://flibusta.is" + cover +"&h=500" ;
 };
 
-const getComments = async (bid)=> {
+const getCommentsFromServer = async (bid)=> {
+  return  false;
+  const res = await fetch(`${serverUrl}/comments/${bid}`);
+  if(res.status !== 200) return false;
+
+
+}
+
+const getCommentsFromSite = async (bid)=> {
   const text = await getText('/b/'+bid);
-  const data = await commentParser(text);
-  console.log("comments", data)
-  return  data;
+  return   await commentParser(text);
+}
+
+const getComments = async (bid)=> {
+
+  return await getCommentsFromServer(bid) || await getCommentsFromSite(bid)
+
 }
 
 
@@ -92,6 +104,12 @@ export default ({navigation, route})=> {
   const downloadBook = async()=> {
     const fb2 = downloads?.filter(el=>el.type==="application/fb2+zip")[0]
     const url = proxyCorsUrl+"http://flibusta.is"+fb2.href;
+
+    if(Platform.OS === "web"){
+      await Linking.openURL(url);
+      return false;
+    }
+
     try{
       setFetching(true);
       const downloadedFile = await FileSystem.downloadAsync(url,FileSystem.documentDirectory + 'book.fb2.zip')
@@ -150,10 +168,11 @@ export default ({navigation, route})=> {
 
   const handleCommentsFetch = async()=> {
     //console.log("get comments")
-    //const [_recommendation, _comments, _marks] = await getComments(item.bid);
-    //setComments(_comments);
-    //setRecommendation(_recommendation);
-    //setMarks(_marks);
+    const [_recommendation, _comments, _marks] = await getComments(item.bid);
+    console.log(_recommendation, _comments, _marks);
+    setComments(_comments);
+    setRecommendation(_recommendation);
+    setMarks(_marks);
   }
 
   useEffect(() => {
@@ -163,6 +182,9 @@ export default ({navigation, route})=> {
     setMarks(marks || [0,0]);
     //handleCommentsFetch();
     //downloadBookFromServer("644094");
+    const timeoutId = setTimeout(handleCommentsFetch, 3000)
+
+    return ()=> {console.log("clear timeout"); clearTimeout(timeoutId)}
   }, []);
 
   return (
