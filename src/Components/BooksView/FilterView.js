@@ -9,12 +9,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const GenreItem = ({genre, setFilter})=> {
   return (
     <TouchableOpacity onPress={()=> {setFilter(genre)}} >
-      <View style={{ backgroundColor: "#fcdcd2",  marginVertical: 4,  marginHorizontal: 8, flexDirection: "row", justifyContent: "space-between"}}>
-        <View style={{flexDirection: "row",flex: 5, justifyContent: "flex-start"}}>
+      <View style={{ backgroundColor: "#fcdcd2",   marginVertical: 4,  marginHorizontal: 8, flexDirection: "row", justifyContent: "space-between"}}>
+        <View style={{flexDirection: "row", width: "90%", justifyContent: "flex-start"}}>
           <View style={{width: 10, height: "100%", backgroundColor: Colors.secondary}}/>
           <Text style={{padding: 10, fontSize: 18, color: Colors.prime}}>{genre.title}</Text>
         </View>
-        <View style={{flexDirection: "row", flex: 1, justifyContent: "flex-end", paddingRight: 5, alignSelf: "center"}}>
+        <View style={{flexDirection: "row",  justifyContent: "flex-end", paddingRight: 5, alignSelf: "center"}}>
             <Text style={{padding:5, paddingHorizontal: 10, fontSize: 20,  color: Colors.secondary}}>{genre.count}</Text>
         </View>
       </View>

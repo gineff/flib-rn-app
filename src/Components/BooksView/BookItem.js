@@ -16,7 +16,7 @@ const BookItem =  ({item, index, navigation, onGenreClick})=> {
   //console.log("marks", bid, marks);
 
   return (
-      <View style={[styles.listItem, {padding: containerWidth >= 700? 15 : 0}]} >
+      <View style={[styles.listItem, ]} >
         <TouchableOpacity  onPress = {navigateBook} style={{flexDirection: "row"}}>
           <View style={styles.bookLeftSide}>
             <View style={styles.bookCoverNDateWrapper}>

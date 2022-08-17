@@ -13,7 +13,7 @@ export default function App() {
 
   console.log("app render");
 
-  return (<NavigationContainer theme={{dark:false, colors:{background: Colors.secondaryTint}}}>
+  return (<NavigationContainer >
       <Stack.Navigator  screenOptions={{
         headerStyle: {
           backgroundColor: Colors.prime,
